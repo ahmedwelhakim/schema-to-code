@@ -3,3 +3,6 @@ plugins {
 }
 
 rootProject.name = "schema-to-code"
+
+include("core")
+include("plugin")
