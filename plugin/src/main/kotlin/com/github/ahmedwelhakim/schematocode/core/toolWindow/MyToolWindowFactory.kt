@@ -1,4 +1,4 @@
-package com.github.ahmedwelhakim.schematocode.toolWindow
+package com.github.ahmedwelhakim.schematocode.core.toolWindow
 
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.thisLogger
@@ -8,8 +8,8 @@ import com.intellij.openapi.wm.ToolWindowFactory
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.JBPanel
 import com.intellij.ui.content.ContentFactory
-import com.github.ahmedwelhakim.schematocode.MyBundle
-import com.github.ahmedwelhakim.schematocode.services.MyProjectService
+import com.github.ahmedwelhakim.schematocode.core.MyBundle
+import com.github.ahmedwelhakim.schematocode.core.services.MyProjectService
 import javax.swing.JButton
 
 

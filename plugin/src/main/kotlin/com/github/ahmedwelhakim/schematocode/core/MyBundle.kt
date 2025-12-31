@@ -1,4 +1,4 @@
-package com.github.ahmedwelhakim.schematocode
+package com.github.ahmedwelhakim.schematocode.core
 
 import com.intellij.DynamicBundle
 import org.jetbrains.annotations.NonNls

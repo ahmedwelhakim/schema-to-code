@@ -1,4 +1,4 @@
-package com.github.ahmedwelhakim.schematocode.startup
+package com.github.ahmedwelhakim.schematocode.core.startup
 
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project

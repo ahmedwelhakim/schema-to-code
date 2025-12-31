@@ -9,7 +9,7 @@
     <resource-bundle>messages.MyBundle</resource-bundle>
 
     <extensions defaultExtensionNs="com.intellij">
-        <toolWindow factoryClass="com.github.ahmedwelhakim.schematocode.toolWindow.MyToolWindowFactory" id="MyToolWindow"/>
-        <postStartupActivity implementation="com.github.ahmedwelhakim.schematocode.startup.MyProjectActivity" />
+        <toolWindow factoryClass="com.github.ahmedwelhakim.schematocode.core.toolWindow.MyToolWindowFactory" id="MyToolWindow"/>
+        <postStartupActivity implementation="com.github.ahmedwelhakim.schematocode.core.startup.MyProjectActivity" />
     </extensions>
 </idea-plugin>
