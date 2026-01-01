@@ -1,11 +1,11 @@
-package com.github.ahmedwelhakim.schematocode.core
+package com.github.ahmedwelhakim.schematocode.plugin
 
 import com.intellij.DynamicBundle
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.PropertyKey
 
 @NonNls
-private const val BUNDLE = "messages.MyBundle"
+private const val BUNDLE = "messages.SchemaToCodeBundle"
 
 object MyBundle : DynamicBundle(BUNDLE) {
 

@@ -1,15 +1,16 @@
 <!-- Plugin Configuration File. Read more: https://plugins.jetbrains.com/docs/intellij/plugin-configuration-file.html -->
 <idea-plugin>
     <id>com.github.ahmedwelhakim.schematocode</id>
-    <name>schema-to-code</name>
-    <vendor>ahmedwelhakim</vendor>
+    <name>Schema To Code</name>
+    <vendor email="ahmed.w.elhakim@gmail.com">Ahmed Elhakim</vendor>
 
     <depends>com.intellij.modules.platform</depends>
 
-    <resource-bundle>messages.MyBundle</resource-bundle>
+    <depends>com.intellij.modules.json</depends>
+
+    <resource-bundle>messages.SchemaToCodeBundle</resource-bundle>
 
     <extensions defaultExtensionNs="com.intellij">
-        <toolWindow factoryClass="com.github.ahmedwelhakim.schematocode.core.toolWindow.MyToolWindowFactory" id="MyToolWindow"/>
-        <postStartupActivity implementation="com.github.ahmedwelhakim.schematocode.core.startup.MyProjectActivity" />
+
     </extensions>
 </idea-plugin>

@@ -4,9 +4,13 @@ import com.github.ahmedwelhakim.schematocode.core.ir.Field
 import com.github.ahmedwelhakim.schematocode.core.ir.TypeDef
 import kotlinx.serialization.json.*
 
-fun inferFromJson(name: String, json: JsonElement): TypeDef.ObjectT {
-    require(json is JsonObject)
-    return TypeDef.ObjectT(name, inferFields(json))
+fun inferFromJson(name: String, jsonText: String): TypeDef {
+    return when (val json = Json.parseToJsonElement(jsonText)) {
+        is JsonObject -> TypeDef.ObjectT(name, inferFields(json))
+        is JsonArray -> TypeDef.ArrayT(inferType(json))
+        is JsonPrimitive -> inferPrimitive(json)
+        JsonNull -> TypeDef.NullT
+    }
 }
 
 private fun inferFields(obj: JsonObject, optional: Boolean = false): List<Field> =
