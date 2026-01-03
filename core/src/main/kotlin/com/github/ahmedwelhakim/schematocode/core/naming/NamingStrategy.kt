@@ -1,6 +1,8 @@
 package com.github.ahmedwelhakim.schematocode.core.naming
 
-import com.github.ahmedwelhakim.schematocode.plugin.naming.internal.*
+import com.github.ahmedwelhakim.schematocode.core.naming.internal.toCamelCase
+import com.github.ahmedwelhakim.schematocode.core.naming.internal.toPascalCase
+import com.github.ahmedwelhakim.schematocode.core.naming.internal.toSnakeCase
 
 
 interface NamingStrategy {

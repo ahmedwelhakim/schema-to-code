@@ -1,6 +1,6 @@
 package com.github.ahmedwelhakim.schematocode.core.naming.internal
 
-import com.github.ahmedwelhakim.schematocode.plugin.util.splitWords
+import com.github.ahmedwelhakim.schematocode.core.util.splitWords
 
 internal fun String.toPascalCase(): String =
     splitWords()

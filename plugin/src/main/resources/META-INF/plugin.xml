@@ -11,6 +11,7 @@
     <resource-bundle>messages.SchemaToCodeBundle</resource-bundle>
 
     <extensions defaultExtensionNs="com.intellij">
-
+        <toolWindow id="Schema To Code"
+                    factoryClass="com.github.ahmedwelhakim.schematocode.plugin.ui.SchemaToCodeToolWindowFactory"/>
     </extensions>
 </idea-plugin>

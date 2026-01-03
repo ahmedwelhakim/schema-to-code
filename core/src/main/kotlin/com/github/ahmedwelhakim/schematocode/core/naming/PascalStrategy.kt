@@ -1,6 +1,6 @@
 package com.github.ahmedwelhakim.schematocode.core.naming
 
-import com.github.ahmedwelhakim.schematocode.plugin.naming.internal.toPascalCase
+import com.github.ahmedwelhakim.schematocode.core.naming.internal.toPascalCase
 
 class PascalCaseStrategy(
     extractedTypeCase: NameCase = NameCase.PASCAL
