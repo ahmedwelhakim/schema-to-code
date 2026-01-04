@@ -8,7 +8,7 @@ import com.intellij.ui.content.ContentFactory
 class SchemaToCodeToolWindowFactory : ToolWindowFactory {
 
     override fun createToolWindowContent(project: Project, toolWindow: ToolWindow) {
-        val panel = SchemaToCodeToolWindow()
+        val panel = SchemaToCodeToolWindow(project)
         val content = ContentFactory.getInstance()
             .createContent(panel, null, false)
 

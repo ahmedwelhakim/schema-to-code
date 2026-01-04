@@ -1,10 +1,9 @@
 package com.github.ahmedwelhakim.schematocode.core.options
 
-enum class OptionKeys(val key: String) {
-    MODEL_KIND("modelKind"),
-    NAMING_STRATEGY("namingStrategy");
+import com.github.ahmedwelhakim.schematocode.core.i18n.MessageKey
+import com.github.ahmedwelhakim.schematocode.core.i18n.MessageKeyHolder
 
-    override fun toString(): String {
-        return key
-    }
+enum class OptionKeys(override val bundleKey: String) : MessageKeyHolder {
+    MODEL_KIND(MessageKey.MODEL_KIND.bundleKey),
+    NAMING_STRATEGY(MessageKey.NAMING_STRATEGY.bundleKey);
 }

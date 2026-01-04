@@ -1,7 +1,7 @@
 package com.github.ahmedwelhakim.schematocode.plugin.ui
 
 import com.github.ahmedwelhakim.schematocode.core.config.GeneratorConfig
-import com.github.ahmedwelhakim.schematocode.core.config.Language
+import com.github.ahmedwelhakim.schematocode.core.config.TargetLanguage
 import com.github.ahmedwelhakim.schematocode.core.emit.LanguageOptions
 import com.github.ahmedwelhakim.schematocode.core.infer.inferFromJson
 import com.github.ahmedwelhakim.schematocode.core.language.LanguageDescriptor
@@ -9,14 +9,16 @@ import com.github.ahmedwelhakim.schematocode.core.language.TypescriptLanguage
 import com.github.ahmedwelhakim.schematocode.core.options.BooleanOption
 import com.github.ahmedwelhakim.schematocode.core.options.EnumOption
 import com.github.ahmedwelhakim.schematocode.core.options.OptionDef
+import com.github.ahmedwelhakim.schematocode.plugin.language.LanguageId
 import com.github.ahmedwelhakim.schematocode.plugin.language.LanguageRegistry
-import com.intellij.json.JsonFileType
+import com.github.ahmedwelhakim.schematocode.plugin.language.getLanguageID
+import com.github.ahmedwelhakim.schematocode.plugin.util.withEnumTranslation
+import com.intellij.lang.Language
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.fileEditor.impl.createSplitter
-import com.intellij.openapi.fileTypes.FileType
-import com.intellij.openapi.fileTypes.PlainTextFileType
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.SimpleToolWindowPanel
-import com.intellij.ui.EditorTextField
+import com.intellij.ui.LanguageTextField
 import com.intellij.ui.dsl.builder.Align
 import com.intellij.ui.dsl.builder.bindItem
 import com.intellij.ui.dsl.builder.panel
@@ -25,17 +27,14 @@ import javax.swing.JComponent
 import javax.swing.JPanel
 import javax.swing.JScrollPane
 
-class SchemaToCodeToolWindow : SimpleToolWindowPanel(true, true) {
+class SchemaToCodeToolWindow(private val project: Project) : SimpleToolWindowPanel(true, true) {
 
     private val inputEditor = createEditor(
-        fileType = JsonFileType.INSTANCE,
-        editable = true
+        LanguageId.JSON,
     )
 
-    private val outputEditor = createEditor(
-        fileType = PlainTextFileType.INSTANCE,
-        editable = false
-    )
+    private val outputEditorContainer = JPanel(BorderLayout())
+    private lateinit var outputEditor: LanguageTextField
 
     private var currentDescriptor: LanguageDescriptor<*> = TypescriptLanguage
     private var currentOptions: LanguageOptions = currentDescriptor.defaultOptions()
@@ -46,31 +45,38 @@ class SchemaToCodeToolWindow : SimpleToolWindowPanel(true, true) {
 
         setContent(buildUi())
         rebuildOptionsPanel()
+        rebuildOutputEditor(currentDescriptor.targetLanguage)
     }
 
     private fun buildUi(): JComponent = panel {
+
         row {
-            comboBox(Language.values().toList())
+            comboBox(TargetLanguage.values().toList())
                 .label("Language:")
+                .withEnumTranslation { it.bundleKey }
                 .bindItem(
-                    { currentDescriptor.language },
+                    { currentDescriptor.targetLanguage },
                     {
                         currentDescriptor = LanguageRegistry.getLanguageDescriptor(it!!)
                         currentOptions = currentDescriptor.defaultOptions()
+
                         rebuildOptionsPanel()
+                        rebuildOutputEditor(it)
                         regenerate()
                     }
                 )
+
         }
 
         row {
-            cell(
+
+            scrollCell(
                 createSplitter(false, 0.5f, 0.1f, 0.9f).apply {
                     firstComponent = JScrollPane(inputEditor)
-                    secondComponent = JScrollPane(outputEditor)
+                    secondComponent = JScrollPane(outputEditorContainer)
                 }
             ).align(Align.FILL)
-        }
+        }.resizableRow()
 
         row {
             cell(optionsPanel).align(Align.FILL)
@@ -91,6 +97,7 @@ class SchemaToCodeToolWindow : SimpleToolWindowPanel(true, true) {
             when (def) {
                 is EnumOption<*> -> row {
                     comboBox(def.values.toList())
+                        .withEnumTranslation { it.bundleKey }
                         .onChanged { onChange() }
                 }
 
@@ -101,6 +108,7 @@ class SchemaToCodeToolWindow : SimpleToolWindowPanel(true, true) {
             }
         }
     }
+
 
     private fun rebuildOptionsPanel() {
         optionsPanel.removeAll()
@@ -127,23 +135,36 @@ class SchemaToCodeToolWindow : SimpleToolWindowPanel(true, true) {
         }
     }
 
-    private fun createEditor(
-        fileType: FileType,
-        editable: Boolean
-    ): EditorTextField =
-        EditorTextField("", null, fileType).apply {
-            setOneLineMode(false)
-            setEnabled(true)
-            setViewer(!editable)
+    private fun rebuildOutputEditor(newLanguage: TargetLanguage) {
+        val oldText = if (::outputEditor.isInitialized) outputEditor.text else ""
 
+        outputEditorContainer.removeAll()
+
+        outputEditor = createEditor(getLanguageID(newLanguage))
+        outputEditor.text = oldText
+
+        outputEditorContainer.add(outputEditor, BorderLayout.CENTER)
+        outputEditorContainer.revalidate()
+        outputEditorContainer.repaint()
+    }
+
+    private fun createEditor(
+        languageId: LanguageId,
+    ): LanguageTextField {
+        val lang = Language.findLanguageByID(languageId.toString())
+        return LanguageTextField(lang, project, "").apply {
+            setOneLineMode(false)
+
+            isViewer = false
             addSettingsProvider { editor ->
                 (editor as EditorEx).settings.apply {
                     isLineNumbersShown = true
-                    isLineMarkerAreaShown = false
-                    isFoldingOutlineShown = true
                     isIndentGuidesShown = true
+                    isFoldingOutlineShown = true
                 }
             }
         }
-
+    }
 }
+
+

@@ -1,6 +1,8 @@
 package com.github.ahmedwelhakim.schematocode.core.options
 
-class EnumOption<T : Enum<T>>(
+import com.github.ahmedwelhakim.schematocode.core.i18n.MessageKeyHolder
+
+class EnumOption<T : MessageKeyHolder>(
     key: OptionKeys,
     default: T,
     val values: Array<T>
