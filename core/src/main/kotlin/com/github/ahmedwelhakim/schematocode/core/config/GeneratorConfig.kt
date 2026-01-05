@@ -1,10 +1,10 @@
 package com.github.ahmedwelhakim.schematocode.core.config
 
-import com.github.ahmedwelhakim.schematocode.core.naming.IdentityNamingStrategy
-import com.github.ahmedwelhakim.schematocode.core.naming.NamingStrategy
+import com.github.ahmedwelhakim.schematocode.core.naming.NamingStrategyType
 
 
 data class GeneratorConfig(
-    val namingStrategy: NamingStrategy = IdentityNamingStrategy(),
-    val inlineObjects: Boolean = true
+    var namingStrategyType: NamingStrategyType = NamingStrategyType.IDENTITY,
+    var inlineObjects: Boolean = true,
+    var name: String = "Root"
 )

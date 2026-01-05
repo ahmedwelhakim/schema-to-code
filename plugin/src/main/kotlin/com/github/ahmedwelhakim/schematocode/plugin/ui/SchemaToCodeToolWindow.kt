@@ -6,6 +6,7 @@ import com.github.ahmedwelhakim.schematocode.core.emit.LanguageOptions
 import com.github.ahmedwelhakim.schematocode.core.infer.inferFromJson
 import com.github.ahmedwelhakim.schematocode.core.language.LanguageDescriptor
 import com.github.ahmedwelhakim.schematocode.core.language.TypescriptLanguage
+import com.github.ahmedwelhakim.schematocode.core.naming.NamingStrategyType
 import com.github.ahmedwelhakim.schematocode.core.options.BooleanOption
 import com.github.ahmedwelhakim.schematocode.core.options.EnumOption
 import com.github.ahmedwelhakim.schematocode.core.options.OptionDef
@@ -15,9 +16,9 @@ import com.github.ahmedwelhakim.schematocode.plugin.language.getLanguageID
 import com.github.ahmedwelhakim.schematocode.plugin.util.withEnumTranslation
 import com.intellij.lang.Language
 import com.intellij.openapi.editor.ex.EditorEx
-import com.intellij.openapi.fileEditor.impl.createSplitter
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.SimpleToolWindowPanel
+import com.intellij.openapi.ui.Splitter
 import com.intellij.ui.LanguageTextField
 import com.intellij.ui.dsl.builder.Align
 import com.intellij.ui.dsl.builder.bindItem
@@ -38,7 +39,7 @@ class SchemaToCodeToolWindow(private val project: Project) : SimpleToolWindowPan
 
     private var currentDescriptor: LanguageDescriptor<*> = TypescriptLanguage
     private var currentOptions: LanguageOptions = currentDescriptor.defaultOptions()
-
+    private val generatorConfig = GeneratorConfig()
     private val optionsPanel = JPanel(BorderLayout())
 
     init {
@@ -51,7 +52,7 @@ class SchemaToCodeToolWindow(private val project: Project) : SimpleToolWindowPan
     private fun buildUi(): JComponent = panel {
 
         row {
-            comboBox(TargetLanguage.values().toList())
+            comboBox(TargetLanguage.entries)
                 .label("Language:")
                 .withEnumTranslation { it.bundleKey }
                 .bindItem(
@@ -65,13 +66,25 @@ class SchemaToCodeToolWindow(private val project: Project) : SimpleToolWindowPan
                         regenerate()
                     }
                 )
+            comboBox(NamingStrategyType.entries)
+                .label("Naming Strategy")
+                .onChanged {
+                    generatorConfig.namingStrategyType = it.selectedItem!! as NamingStrategyType
+                }
+                .withEnumTranslation { it.bundleKey }
+
+            checkBox("Inline")
+
+                .onChanged {
+                    generatorConfig.inlineObjects = it.isSelected
+                }
 
         }
 
         row {
 
             scrollCell(
-                createSplitter(false, 0.5f, 0.1f, 0.9f).apply {
+                Splitter(false, 0.5f, 0.1f, 0.9f).apply {
                     firstComponent = JScrollPane(inputEditor)
                     secondComponent = JScrollPane(outputEditorContainer)
                 }
@@ -98,12 +111,29 @@ class SchemaToCodeToolWindow(private val project: Project) : SimpleToolWindowPan
                 is EnumOption<*> -> row {
                     comboBox(def.values.toList())
                         .withEnumTranslation { it.bundleKey }
-                        .onChanged { onChange() }
+                        .applyToComponent {
+                            selectedItem =
+                                currentOptions.get(def.key) ?: def.default
+                        }
+                        .onChanged {
+                            val selectedItem = it.selectedItem
+                            currentOptions =
+                                if (selectedItem != null)
+                                    currentOptions.with(def.key, selectedItem)
+                                else currentOptions
+                            onChange()
+                        }
                 }
 
                 is BooleanOption -> row {
                     checkBox(def.key.toString())
                         .onChanged { onChange() }
+                        .applyToComponent {
+                            isSelected = currentOptions.get(def.key) ?: def.default
+                        }.onChanged {
+                            currentOptions = currentOptions.with(def.key, it.isSelected)
+                            onChange()
+                        }
                 }
             }
         }
@@ -115,9 +145,7 @@ class SchemaToCodeToolWindow(private val project: Project) : SimpleToolWindowPan
 
 
         optionsPanel.add(
-            buildOptionsPanel(currentDescriptor.optionDefs()) {
-                regenerate()
-            },
+            buildOptionsPanel(currentDescriptor.optionDefs()) {},
             BorderLayout.CENTER
         )
 
@@ -128,8 +156,10 @@ class SchemaToCodeToolWindow(private val project: Project) : SimpleToolWindowPan
     private fun regenerate() {
         try {
             val ir = inferFromJson("Root", inputEditor.text)
+
+            @Suppress("UNCHECKED_CAST")
             val emitter = (currentDescriptor as LanguageDescriptor<LanguageOptions>).createEmitter(currentOptions)
-            outputEditor.text = emitter.emit(ir, GeneratorConfig())
+            outputEditor.text = emitter.emit(ir, generatorConfig)
         } catch (e: Exception) {
             outputEditor.text = "// Error\n// ${e.message}"
         }
@@ -161,6 +191,7 @@ class SchemaToCodeToolWindow(private val project: Project) : SimpleToolWindowPan
                     isLineNumbersShown = true
                     isIndentGuidesShown = true
                     isFoldingOutlineShown = true
+                    isRefrainFromScrolling = false
                 }
             }
         }

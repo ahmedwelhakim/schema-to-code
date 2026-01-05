@@ -1,6 +1,7 @@
 package com.github.ahmedwelhakim.schematocode.core.infer
 
 import com.github.ahmedwelhakim.schematocode.core.ir.Field
+import com.github.ahmedwelhakim.schematocode.core.ir.ScalarType
 import com.github.ahmedwelhakim.schematocode.core.ir.TypeDef
 import kotlinx.serialization.json.*
 
@@ -9,7 +10,7 @@ fun inferFromJson(name: String, jsonText: String): TypeDef {
         is JsonObject -> TypeDef.ObjectT(name, inferFields(json))
         is JsonArray -> TypeDef.ArrayT(inferType(json))
         is JsonPrimitive -> inferPrimitive(json)
-        JsonNull -> TypeDef.NullT
+        JsonNull -> TypeDef.PrimitiveT(ScalarType.NULL)
     }
 }
 
@@ -31,15 +32,15 @@ private fun inferType(el: JsonElement): TypeDef =
             fields = inferFields(el)
         )
 
-        JsonNull -> TypeDef.NullT
+        JsonNull -> TypeDef.PrimitiveT(ScalarType.NULL)
     }
 
 private fun inferPrimitive(p: JsonPrimitive): TypeDef =
     when {
-        p.isString -> TypeDef.StringT
-        p.booleanOrNull != null -> TypeDef.BooleanT
-        p.doubleOrNull != null -> TypeDef.NumberT
-        p.contentOrNull == null -> TypeDef.NullT
+        p.isString -> TypeDef.PrimitiveT(ScalarType.STRING)
+        p.booleanOrNull != null -> TypeDef.PrimitiveT(ScalarType.BOOLEAN)
+        p.doubleOrNull != null -> TypeDef.PrimitiveT(ScalarType.NUMBER)
+        p.contentOrNull == null -> TypeDef.PrimitiveT(ScalarType.NULL)
         else -> TypeDef.AnyT
     }
 

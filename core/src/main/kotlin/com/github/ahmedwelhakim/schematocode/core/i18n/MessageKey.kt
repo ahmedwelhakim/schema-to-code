@@ -17,4 +17,5 @@ enum class MessageKey(override val bundleKey: String) : MessageKeyHolder {
     CAMEL("namingStrategies.camel"),
     SNAKE("namingStrategies.snake"),
     KEBAB("namingStrategies.kebab"),
+    IDENTITY("namingStrategies.identity"),
 }
