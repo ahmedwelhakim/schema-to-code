@@ -4,5 +4,5 @@ import com.github.ahmedwelhakim.schematocode.core.i18n.MessageKey
 import com.github.ahmedwelhakim.schematocode.core.i18n.MessageKeyHolder
 
 enum class TargetLanguage(override val bundleKey: String) : MessageKeyHolder {
-    TYPESCRIPT(MessageKey.TYPESCRIPT.bundleKey);
+    TYPESCRIPT(MessageKey.TYPESCRIPT.bundleKey)
 }

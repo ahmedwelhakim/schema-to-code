@@ -1,39 +1,52 @@
-package com.github.ahmedwelhakim.schematocode.core.infer
+package com.github.ahmedwelhakim.schematocode.core.infer.json
 
 import com.github.ahmedwelhakim.schematocode.core.ir.Field
 import com.github.ahmedwelhakim.schematocode.core.ir.ScalarType
 import com.github.ahmedwelhakim.schematocode.core.ir.TypeDef
+import com.github.ahmedwelhakim.schematocode.core.normalize.TypeNormalizer
+import com.github.ahmedwelhakim.schematocode.core.resolve.NameResolver
 import kotlinx.serialization.json.*
 
 fun inferFromJson(name: String, jsonText: String): TypeDef {
-    return when (val json = Json.parseToJsonElement(jsonText)) {
+    val raw = when (val json = Json.parseToJsonElement(jsonText)) {
         is JsonObject -> TypeDef.ObjectT(name, inferFields(json))
-        is JsonArray -> TypeDef.ArrayT(inferType(json))
+        is JsonArray -> inferArray(json, name)
         is JsonPrimitive -> inferPrimitive(json)
         JsonNull -> TypeDef.PrimitiveT(ScalarType.NULL)
     }
+    val normalized = TypeNormalizer.normalize(raw)
+    val nameResolver = NameResolver()
+    val resolved = nameResolver.resolve(normalized, name)
+    return resolved
 }
 
-private fun inferFields(obj: JsonObject, optional: Boolean = false): List<Field> =
+private fun inferFields(obj: JsonObject): List<Field> =
     obj.map { (key, value) ->
         Field(
             name = key,
-            type = inferType(value),
-            optional = optional
+            type = inferType(value, key),
+            optional = false
         )
     }
 
-private fun inferType(el: JsonElement): TypeDef =
+private fun inferType(el: JsonElement, key: String): TypeDef =
     when (el) {
         is JsonPrimitive -> inferPrimitive(el)
-        is JsonArray -> inferArray(el)
+        is JsonArray -> inferArray(el, key)
         is JsonObject -> TypeDef.ObjectT(
-            name = "Anonymous",
+            name = key,
             fields = inferFields(el)
         )
 
         JsonNull -> TypeDef.PrimitiveT(ScalarType.NULL)
     }
+
+private fun inferArray(arr: JsonArray, key: String): TypeDef {
+    if (arr.isEmpty()) return TypeDef.ArrayT(TypeDef.AnyT)
+
+    val elements = arr.map { inferType(it, key) }
+    return TypeDef.ArrayT(TypeDef.UnionT(elements.toSet()))
+}
 
 private fun inferPrimitive(p: JsonPrimitive): TypeDef =
     when {
@@ -44,12 +57,3 @@ private fun inferPrimitive(p: JsonPrimitive): TypeDef =
         else -> TypeDef.AnyT
     }
 
-private fun inferArray(arr: JsonArray): TypeDef {
-    if (arr.isEmpty()) return TypeDef.ArrayT(TypeDef.AnyT)
-
-    val types = arr.map { inferType(it) }.toSet()
-    return TypeDef.ArrayT(
-        if (types.size == 1) types.first()
-        else TypeDef.UnionT(types)
-    )
-}

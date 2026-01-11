@@ -3,7 +3,7 @@ package com.github.ahmedwelhakim.schematocode.plugin.ui
 import com.github.ahmedwelhakim.schematocode.core.config.GeneratorConfig
 import com.github.ahmedwelhakim.schematocode.core.config.TargetLanguage
 import com.github.ahmedwelhakim.schematocode.core.emit.LanguageOptions
-import com.github.ahmedwelhakim.schematocode.core.infer.inferFromJson
+import com.github.ahmedwelhakim.schematocode.core.infer.json.inferFromJson
 import com.github.ahmedwelhakim.schematocode.core.language.LanguageDescriptor
 import com.github.ahmedwelhakim.schematocode.core.language.TypescriptLanguage
 import com.github.ahmedwelhakim.schematocode.core.naming.NamingStrategyType
@@ -43,7 +43,26 @@ class SchemaToCodeToolWindow(private val project: Project) : SimpleToolWindowPan
     private val optionsPanel = JPanel(BorderLayout())
 
     init {
-
+        inputEditor.text = """
+            {
+  "name": "properties",
+  "type": "RECORD",
+  "mode": "NULLABLE",
+  "fields": {
+    "name": "firstName",
+    "type": "RECORD",
+    "mode": "NULLABLE",
+    "fields": [
+      {
+        "name": "type",
+        "type": "STRING",
+        "mode": "NULLABLE"
+      }
+    ]
+    
+  }}
+  
+    """.trimIndent()
         setContent(buildUi())
         rebuildOptionsPanel()
         rebuildOutputEditor(currentDescriptor.targetLanguage)
@@ -68,13 +87,18 @@ class SchemaToCodeToolWindow(private val project: Project) : SimpleToolWindowPan
                 )
             comboBox(NamingStrategyType.entries)
                 .label("Naming Strategy")
+                .applyToComponent {
+                    selectedItem = generatorConfig.namingStrategyType
+                }
                 .onChanged {
                     generatorConfig.namingStrategyType = it.selectedItem!! as NamingStrategyType
                 }
                 .withEnumTranslation { it.bundleKey }
 
             checkBox("Inline")
-
+                .applyToComponent {
+                    isSelected = generatorConfig.inlineObjects
+                }
                 .onChanged {
                     generatorConfig.inlineObjects = it.isSelected
                 }
