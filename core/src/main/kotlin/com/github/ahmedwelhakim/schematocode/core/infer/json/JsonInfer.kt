@@ -3,8 +3,6 @@ package com.github.ahmedwelhakim.schematocode.core.infer.json
 import com.github.ahmedwelhakim.schematocode.core.ir.Field
 import com.github.ahmedwelhakim.schematocode.core.ir.ScalarType
 import com.github.ahmedwelhakim.schematocode.core.ir.TypeDef
-import com.github.ahmedwelhakim.schematocode.core.normalize.TypeNormalizer
-import com.github.ahmedwelhakim.schematocode.core.resolve.NameResolver
 import kotlinx.serialization.json.*
 
 fun inferFromJson(name: String, jsonText: String): TypeDef {
@@ -14,10 +12,8 @@ fun inferFromJson(name: String, jsonText: String): TypeDef {
         is JsonPrimitive -> inferPrimitive(json)
         JsonNull -> TypeDef.PrimitiveT(ScalarType.NULL)
     }
-    val normalized = TypeNormalizer.normalize(raw)
-    val nameResolver = NameResolver()
-    val resolved = nameResolver.resolve(normalized, name)
-    return resolved
+
+    return raw
 }
 
 private fun inferFields(obj: JsonObject): List<Field> =
