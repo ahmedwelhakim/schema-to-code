@@ -44,24 +44,42 @@ class SchemaToCodeToolWindow(private val project: Project) : SimpleToolWindowPan
 
     init {
         inputEditor.text = """
-            {
-  "name": "properties",
-  "type": "RECORD",
-  "mode": "NULLABLE",
-  "fields": {
-    "name": "firstName",
-    "type": "RECORD",
-    "mode": "NULLABLE",
-    "fields": [
-      {
-        "name": "type",
-        "type": "STRING",
-        "mode": "NULLABLE"
+{
+  "title": "Example Schema",
+  "type": "object",
+  "properties": {
+    "firstName": {
+      "type": "string"
+    },
+    "lastName": {
+      "type": "string"
+    },
+    "age": {
+      "description": "Age in years",
+      "type": "integer",
+      "minimum": 0
+    },
+    "height": {
+      "type": "number",
+      "nullable": true
+    },
+    "favoriteFoods": {
+      "type": "array",
+      "minItems": 0,
+      "maxItems": 2,
+      "items": {
+        "type": "string"
       }
-    ]
-    
-  }}
-  
+    },
+    "likesDogs": {
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "firstName",
+    "lastName"
+  ]
+}
     """.trimIndent()
         setContent(buildUi())
         rebuildOptionsPanel()
@@ -102,15 +120,21 @@ class SchemaToCodeToolWindow(private val project: Project) : SimpleToolWindowPan
                 .onChanged {
                     generatorConfig.inlineObjects = it.isSelected
                 }
-
         }
 
         row {
-
-            scrollCell(
+            cell(
                 Splitter(false, 0.5f, 0.1f, 0.9f).apply {
-                    firstComponent = JScrollPane(inputEditor)
-                    secondComponent = JScrollPane(outputEditorContainer)
+                    firstComponent = JScrollPane(inputEditor).apply {
+                        verticalScrollBar.unitIncrement = 12
+                        horizontalScrollBar.unitIncrement = 12
+
+                    }
+                    secondComponent = JScrollPane(outputEditorContainer).apply {
+                        verticalScrollBar.unitIncrement = 12
+                        horizontalScrollBar.unitIncrement = 12
+
+                    }
                 }
             ).align(Align.FILL)
         }.resizableRow()
@@ -213,13 +237,17 @@ class SchemaToCodeToolWindow(private val project: Project) : SimpleToolWindowPan
             setOneLineMode(false)
 
             isViewer = false
+            preferredSize = null
+            minimumSize = java.awt.Dimension(0, 0)
             addSettingsProvider { editor ->
-                (editor as EditorEx).settings.apply {
+                val ex = editor as EditorEx
+                ex.settings.apply {
                     isLineNumbersShown = true
                     isIndentGuidesShown = true
                     isFoldingOutlineShown = true
-                    isRefrainFromScrolling = false
                 }
+
+
             }
         }
     }

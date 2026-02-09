@@ -22,7 +22,7 @@ class EmissionPlanner(
                         nameHint = type.name,
                         structure = type.structuralKey()
                     )
-                    
+
                     if (visited.add(semanticKey)) {
                         type.fields.forEach { collect(it.type) }
                         units += EmissionUnit(symbols.nameOf(type), type)
@@ -38,12 +38,6 @@ class EmissionPlanner(
 
         collect(ir)
 
-        return EmissionPlan(
-            units = units,
-            rootAlias = RootAlias(
-                name = rootName,
-                target = ir
-            )
-        )
+        return EmissionPlan(units = units)
     }
 }
