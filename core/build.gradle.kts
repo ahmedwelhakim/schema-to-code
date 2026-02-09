@@ -4,7 +4,7 @@ plugins {
     alias(libs.plugins.serialization)
 }
 
-group = "com.github.ahmedwelhakim.schematocode"
+group = "com.github.ahmedwelhakim.schematocode.core"
 version = "0.0.1"
 
 repositories {
