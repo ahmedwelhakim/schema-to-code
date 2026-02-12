@@ -30,7 +30,7 @@ private fun inferType(el: JsonElement, key: String): TypeDef =
         is JsonPrimitive -> inferPrimitive(el)
         is JsonArray -> inferArray(el, key)
         is JsonObject -> TypeDef.ObjectT(
-           
+
             fields = inferFields(el)
         )
 
@@ -48,7 +48,8 @@ private fun inferPrimitive(p: JsonPrimitive): TypeDef =
     when {
         p.isString -> TypeDef.PrimitiveT(ScalarType.STRING)
         p.booleanOrNull != null -> TypeDef.PrimitiveT(ScalarType.BOOLEAN)
-        p.doubleOrNull != null -> TypeDef.PrimitiveT(ScalarType.NUMBER)
+        p.intOrNull != null -> TypeDef.PrimitiveT(ScalarType.INT)
+        p.doubleOrNull != null -> TypeDef.PrimitiveT(ScalarType.DOUBLE)
         p.contentOrNull == null -> TypeDef.PrimitiveT(ScalarType.NULL)
         else -> TypeDef.AnyT
     }

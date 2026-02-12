@@ -3,7 +3,6 @@ package com.github.ahmedwelhakim.schematocode.core.emit
 import com.github.ahmedwelhakim.schematocode.core.ir.TypeDef
 import com.github.ahmedwelhakim.schematocode.core.resolve.NameResolver
 import com.github.ahmedwelhakim.schematocode.core.resolve.SemanticKey
-import com.github.ahmedwelhakim.schematocode.core.resolve.structuralKey
 
 class EmissionPlanner(
     private val resolver: NameResolver
@@ -15,30 +14,25 @@ class EmissionPlanner(
         val visited = mutableSetOf<SemanticKey>()
         val units = mutableListOf<EmissionUnit>()
 
-        fun collect(type: TypeDef, nameHint: String? = null) {
+        fun collect(type: TypeDef) {
             when (type) {
                 is TypeDef.ObjectT -> {
-                    val typeName = nameHint ?: "Anonymous"
-                    val semanticKey = SemanticKey(
-                        nameHint = typeName,
-                        structure = type.structuralKey()
-                    )
-
+                    val semanticKey = symbols.semanticKeyOf(type)
                     if (visited.add(semanticKey)) {
-                        type.fields.forEach { collect(it.type, it.name) }
+                        type.fields.forEach { collect(it.type) }
                         units += EmissionUnit(symbols.nameOf(semanticKey), type, semanticKey)
                     }
 
                 }
 
-                is TypeDef.ArrayT -> collect(type.element, nameHint?.plus("Item"))
-                is TypeDef.UnionT -> type.types.forEach { collect(it, nameHint) }
+                is TypeDef.ArrayT -> collect(type.element)
+                is TypeDef.UnionT -> type.types.forEach { collect(it) }
                 else -> Unit
             }
         }
 
-        collect(ir, rootName)
+        collect(ir)
 
-        return EmissionPlan(units = units)
+        return EmissionPlan(units = units, symbols = symbols, root = ir)
     }
 }

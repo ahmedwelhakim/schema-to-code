@@ -13,9 +13,9 @@ class NameResolver {
                     val base = hint ?: "Anonymous"
                     val semanticKey = SemanticKey(
                         nameHint = base,
-                        structure = type.structuralKey()
+                        structure = type
                     )
-                    symbols.declare(semanticKey, base)
+                    symbols.declare(type, semanticKey, base)
 
                     type.fields.forEach {
                         visit(it.type, it.name)

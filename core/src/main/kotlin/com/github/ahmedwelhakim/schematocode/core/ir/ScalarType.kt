@@ -2,7 +2,9 @@ package com.github.ahmedwelhakim.schematocode.core.ir
 
 enum class ScalarType {
     STRING,
-    NUMBER,
+    INT,
+    DOUBLE,
     BOOLEAN,
-    NULL
+    NULL,
+
 }

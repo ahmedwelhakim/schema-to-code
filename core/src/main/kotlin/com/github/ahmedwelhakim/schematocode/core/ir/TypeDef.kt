@@ -4,14 +4,14 @@ sealed interface TypeDef {
 
     object AnyT : TypeDef
 
-    data class PrimitiveT(
+    class PrimitiveT(
         val type: ScalarType,
         val format: Format? = null
     ) : TypeDef
 
-    data class ArrayT(val element: TypeDef) : TypeDef
-    data class ObjectT(val fields: List<Field>) : TypeDef
-    data class UnionT(val types: Set<TypeDef>) : TypeDef
+    class ArrayT(val element: TypeDef) : TypeDef
+    class ObjectT(val fields: List<Field>) : TypeDef
+    class UnionT(val types: Set<TypeDef>) : TypeDef
 
 }
 
