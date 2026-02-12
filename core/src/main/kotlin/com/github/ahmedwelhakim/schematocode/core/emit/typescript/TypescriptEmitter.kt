@@ -7,6 +7,7 @@ import com.github.ahmedwelhakim.schematocode.core.emit.EmissionUnit
 import com.github.ahmedwelhakim.schematocode.core.ir.Field
 import com.github.ahmedwelhakim.schematocode.core.ir.ScalarType
 import com.github.ahmedwelhakim.schematocode.core.ir.TypeDef
+import com.github.ahmedwelhakim.schematocode.core.naming.NamingStrategy
 import com.github.ahmedwelhakim.schematocode.core.naming.create
 import com.github.ahmedwelhakim.schematocode.core.resolve.SemanticKey
 import com.github.ahmedwelhakim.schematocode.core.resolve.structuralKey
@@ -14,22 +15,24 @@ import com.github.ahmedwelhakim.schematocode.core.resolve.structuralKey
 class TypescriptEmitter(
     private val options: TypescriptOptions
 ) : CodeEmitter {
+
     private lateinit var symbols: Map<SemanticKey, String>
+
     override fun emit(
         plan: EmissionPlan,
         config: GeneratorConfig
     ): String = buildString {
 
-        symbols =
-            plan.units.associate {
-                SemanticKey(it.type.name, it.type.structuralKey()) to it.name
+        // Build lookup table using object instance identity
+        symbols = plan.units.associate { it.semanticKey to it.name }
+
+        // Emit in reversed order (Root first)
+        plan.units
+            .asReversed()
+            .forEach { unit ->
+                emitObject(unit, config)
+                appendLine()
             }
-        plan.units.reversed().forEach { unit ->
-            emitObject(unit, config)
-            appendLine()
-        }
-
-
     }
 
     // ----------------------------------------------------------------------
@@ -49,54 +52,54 @@ class TypescriptEmitter(
         }
 
         unit.type.fields.forEach { field ->
-            appendLine(
-                "  ${emitField(field, naming)}"
-            )
+            appendLine("  ${emitField(field, naming)}")
         }
 
         appendLine("}")
     }
 
+    // ----------------------------------------------------------------------
+
     private fun emitField(
         field: Field,
-        naming: com.github.ahmedwelhakim.schematocode.core.naming.NamingStrategy
+        naming: NamingStrategy
     ): String {
         val name = naming.fieldName(field.name)
         val optional = if (field.optional) "?" else ""
-        val type = emitType(field.type)
+        val type = emitType(field.type, field.name)
 
         return "$name$optional: $type;"
     }
 
-
     // ----------------------------------------------------------------------
 
-    private fun emitType(type: TypeDef): String =
+    private fun emitType(type: TypeDef, hintName: String): String =
         when (type) {
 
-            is TypeDef.PrimitiveT -> when (type.type) {
-                ScalarType.STRING -> "string"
-                ScalarType.NUMBER -> "number"
-                ScalarType.BOOLEAN -> "boolean"
-                ScalarType.NULL -> "null"
-            }
+            is TypeDef.PrimitiveT ->
+                when (type.type) {
+                    ScalarType.STRING -> "string"
+                    ScalarType.NUMBER -> "number"
+                    ScalarType.BOOLEAN -> "boolean"
+                    ScalarType.NULL -> "null"
+                }
 
             TypeDef.AnyT ->
                 "any"
 
             is TypeDef.ArrayT ->
-                "${emitType(type.element)}[]"
+                "${emitType(type.element, hintName.plus("Item"))}[]"
 
             is TypeDef.UnionT ->
-                type.types.joinToString(" | ") { emitType(it) }
+                type.types.joinToString(" | ") { emitType(it, hintName) }
 
             is TypeDef.ObjectT -> {
-
                 val key = SemanticKey(
-                    nameHint = type.name,
+                    nameHint = hintName,
                     structure = type.structuralKey()
                 )
-                symbols[key] ?: error("Undefined type ${type.structuralKey()}")
+                symbols[key]
+                    ?: error("Undefined emitted type for object: ${type.structuralKey()}")
             }
         }
 }

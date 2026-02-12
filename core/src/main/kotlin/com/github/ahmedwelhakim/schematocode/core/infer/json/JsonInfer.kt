@@ -7,7 +7,7 @@ import kotlinx.serialization.json.*
 
 fun inferFromJson(name: String, jsonText: String): TypeDef {
     val raw = when (val json = Json.parseToJsonElement(jsonText)) {
-        is JsonObject -> TypeDef.ObjectT(name, inferFields(json))
+        is JsonObject -> TypeDef.ObjectT(inferFields(json))
         is JsonArray -> inferArray(json, name)
         is JsonPrimitive -> inferPrimitive(json)
         JsonNull -> TypeDef.PrimitiveT(ScalarType.NULL)
@@ -30,7 +30,7 @@ private fun inferType(el: JsonElement, key: String): TypeDef =
         is JsonPrimitive -> inferPrimitive(el)
         is JsonArray -> inferArray(el, key)
         is JsonObject -> TypeDef.ObjectT(
-            name = key,
+           
             fields = inferFields(el)
         )
 

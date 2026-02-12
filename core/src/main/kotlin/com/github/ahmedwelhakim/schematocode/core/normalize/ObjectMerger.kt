@@ -25,7 +25,6 @@ fun mergeObjects(
     }
 
     return TypeDef.ObjectT(
-        name = objects.first().name,
         fields = mergedFields
     )
 }

@@ -1,18 +1,17 @@
 package com.github.ahmedwelhakim.schematocode.core.resolve
 
-import com.github.ahmedwelhakim.schematocode.core.ir.TypeDef
 import com.github.ahmedwelhakim.schematocode.core.naming.internal.toPascalCase
 
 class SymbolTable {
-    private val byType = mutableMapOf<TypeDef.ObjectT, String>()
-    private val byName = mutableMapOf<String, TypeDef.ObjectT>()
+    private val byType = mutableMapOf<SemanticKey, String>()
+    private val byName = mutableMapOf<String, SemanticKey>()
     private val usedTimes = mutableMapOf<String, Int>()
 
-    fun declare(type: TypeDef.ObjectT, name: String) {
+    fun declare(type: SemanticKey, name: String) {
         var uniqueName: String = name.toPascalCase()
-        if (byName.containsKey(name)) {
+        if (byName.containsKey(uniqueName)) {
             usedTimes[name] = usedTimes.getOrDefault(name, 1) + 1
-            uniqueName = "$name${usedTimes[name]}"
+            uniqueName = "${name.toPascalCase()}${usedTimes[name]}"
         }
         byName[uniqueName] = type
         byType[type] = uniqueName
@@ -20,5 +19,5 @@ class SymbolTable {
     }
 
 
-    fun nameOf(type: TypeDef.ObjectT): String = byType[type] ?: error("Type $type is not declared")
+    fun nameOf(type: SemanticKey): String = byType[type] ?: error("Type $type is not declared")
 }

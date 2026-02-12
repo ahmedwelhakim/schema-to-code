@@ -10,8 +10,12 @@ class NameResolver {
         fun visit(type: TypeDef, hint: String?) {
             when (type) {
                 is TypeDef.ObjectT -> {
-                    val base = hint ?: type.name
-                    symbols.declare(type, base)
+                    val base = hint ?: "Anonymous"
+                    val semanticKey = SemanticKey(
+                        nameHint = base,
+                        structure = type.structuralKey()
+                    )
+                    symbols.declare(semanticKey, base)
 
                     type.fields.forEach {
                         visit(it.type, it.name)

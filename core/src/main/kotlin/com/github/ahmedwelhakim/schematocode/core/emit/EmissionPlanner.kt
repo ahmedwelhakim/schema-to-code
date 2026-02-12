@@ -15,28 +15,29 @@ class EmissionPlanner(
         val visited = mutableSetOf<SemanticKey>()
         val units = mutableListOf<EmissionUnit>()
 
-        fun collect(type: TypeDef) {
+        fun collect(type: TypeDef, nameHint: String? = null) {
             when (type) {
                 is TypeDef.ObjectT -> {
+                    val typeName = nameHint ?: "Anonymous"
                     val semanticKey = SemanticKey(
-                        nameHint = type.name,
+                        nameHint = typeName,
                         structure = type.structuralKey()
                     )
 
                     if (visited.add(semanticKey)) {
-                        type.fields.forEach { collect(it.type) }
-                        units += EmissionUnit(symbols.nameOf(type), type)
+                        type.fields.forEach { collect(it.type, it.name) }
+                        units += EmissionUnit(symbols.nameOf(semanticKey), type, semanticKey)
                     }
 
                 }
 
-                is TypeDef.ArrayT -> collect(type.element)
-                is TypeDef.UnionT -> type.types.forEach(::collect)
+                is TypeDef.ArrayT -> collect(type.element, nameHint?.plus("Item"))
+                is TypeDef.UnionT -> type.types.forEach { collect(it, nameHint) }
                 else -> Unit
             }
         }
 
-        collect(ir)
+        collect(ir, rootName)
 
         return EmissionPlan(units = units)
     }
