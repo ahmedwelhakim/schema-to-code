@@ -3,16 +3,16 @@ package com.github.ahmedwelhakim.schematocode.core.emit
 import com.github.ahmedwelhakim.schematocode.core.ir.Field
 import com.github.ahmedwelhakim.schematocode.core.ir.ScalarType
 import com.github.ahmedwelhakim.schematocode.core.ir.TypeDef
-import com.github.ahmedwelhakim.schematocode.core.resolve.NameResolver
+import com.github.ahmedwelhakim.schematocode.core.resolve.TypeNameAllocator
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 
-class EmissionPlannerTest {
+class ModelPlannerTest {
 
     @Test
     fun `plan with simple object returns single unit`() {
-        val planner = EmissionPlanner(NameResolver())
+        val planner = ModelPlanner(TypeNameAllocator())
         val obj = TypeDef.ObjectT(
             "User",
             listOf(
@@ -30,7 +30,7 @@ class EmissionPlannerTest {
 
     @Test
     fun `plan with nested objects creates multiple units`() {
-        val planner = EmissionPlanner(NameResolver())
+        val planner = ModelPlanner(TypeNameAllocator())
         val addressObj = TypeDef.ObjectT(
             "Address",
             listOf(
@@ -56,7 +56,7 @@ class EmissionPlannerTest {
 
     @Test
     fun `plan with array of objects includes nested object`() {
-        val planner = EmissionPlanner(NameResolver())
+        val planner = ModelPlanner(TypeNameAllocator())
         val itemObj = TypeDef.ObjectT(
             "Item",
             listOf(
@@ -80,7 +80,7 @@ class EmissionPlannerTest {
 
     @Test
     fun `plan with array of primitives returns single unit`() {
-        val planner = EmissionPlanner(NameResolver())
+        val planner = ModelPlanner(TypeNameAllocator())
         val obj = TypeDef.ObjectT(
             "TagList",
             listOf(
@@ -96,7 +96,7 @@ class EmissionPlannerTest {
 
     @Test
     fun `plan with union of objects includes all union members`() {
-        val planner = EmissionPlanner(NameResolver())
+        val planner = ModelPlanner(TypeNameAllocator())
         val catObj = TypeDef.ObjectT(
             "cat",
             listOf(
@@ -127,7 +127,7 @@ class EmissionPlannerTest {
 
     @Test
     fun `plan with duplicate objects only includes them once`() {
-        val planner = EmissionPlanner(NameResolver())
+        val planner = ModelPlanner(TypeNameAllocator())
         val addressObj = TypeDef.ObjectT(
             "Address",
             listOf(
@@ -151,7 +151,7 @@ class EmissionPlannerTest {
 
     @Test
     fun `plan with deeply nested objects collects all levels`() {
-        val planner = EmissionPlanner(NameResolver())
+        val planner = ModelPlanner(TypeNameAllocator())
         val level3 = TypeDef.ObjectT(
             "Level3",
             listOf(Field("value", TypeDef.PrimitiveT(ScalarType.NUMBER), false))
@@ -175,7 +175,7 @@ class EmissionPlannerTest {
 
     @Test
     fun `plan with only primitive fields returns single unit`() {
-        val planner = EmissionPlanner(NameResolver())
+        val planner = ModelPlanner(TypeNameAllocator())
         val obj = TypeDef.ObjectT(
             "Simple",
             listOf(
@@ -193,7 +193,7 @@ class EmissionPlannerTest {
 
     @Test
     fun `plan with empty object returns single unit`() {
-        val planner = EmissionPlanner(NameResolver())
+        val planner = ModelPlanner(TypeNameAllocator())
         val obj = TypeDef.ObjectT("Empty", emptyList())
 
         val plan = planner.plan(obj, "Empty")
@@ -205,7 +205,7 @@ class EmissionPlannerTest {
 
     @Test
     fun `plan with primitive type returns empty plan`() {
-        val planner = EmissionPlanner(NameResolver())
+        val planner = ModelPlanner(TypeNameAllocator())
         val primitive = TypeDef.PrimitiveT(ScalarType.STRING)
 
         val plan = planner.plan(primitive, "Root")
@@ -215,7 +215,7 @@ class EmissionPlannerTest {
 
     @Test
     fun `plan with array of primitives at root returns empty plan`() {
-        val planner = EmissionPlanner(NameResolver())
+        val planner = ModelPlanner(TypeNameAllocator())
         val arrayType = TypeDef.ArrayT(TypeDef.PrimitiveT(ScalarType.NUMBER))
 
         val plan = planner.plan(arrayType, "Root")
@@ -225,7 +225,7 @@ class EmissionPlannerTest {
 
     @Test
     fun `plan with union of primitives returns empty plan`() {
-        val planner = EmissionPlanner(NameResolver())
+        val planner = ModelPlanner(TypeNameAllocator())
         val union = TypeDef.UnionT(
             setOf(
                 TypeDef.PrimitiveT(ScalarType.STRING),
@@ -240,7 +240,7 @@ class EmissionPlannerTest {
 
     @Test
     fun `plan with complex nested structure collects all objects`() {
-        val planner = EmissionPlanner(NameResolver())
+        val planner = ModelPlanner(TypeNameAllocator())
 
         // Create a complex structure with multiple levels and types
         val metadataObj = TypeDef.ObjectT(
@@ -290,7 +290,7 @@ class EmissionPlannerTest {
 
     @Test
     fun `plan with recursive-like structure deduplicates correctly`() {
-        val planner = EmissionPlanner(NameResolver())
+        val planner = ModelPlanner(TypeNameAllocator())
 
         val nodeObj = TypeDef.ObjectT(
             "Node",
@@ -317,7 +317,7 @@ class EmissionPlannerTest {
 
     @Test
     fun `plan preserves unit order depth-first`() {
-        val planner = EmissionPlanner(NameResolver())
+        val planner = ModelPlanner(TypeNameAllocator())
 
         val innerObj = TypeDef.ObjectT(
             "Inner",
@@ -345,7 +345,7 @@ class EmissionPlannerTest {
 
     @Test
     fun `plan with AnyT type returns empty plan`() {
-        val planner = EmissionPlanner(NameResolver())
+        val planner = ModelPlanner(TypeNameAllocator())
 
         val plan = planner.plan(TypeDef.AnyT, "Root")
 
@@ -354,7 +354,7 @@ class EmissionPlannerTest {
 
     @Test
     fun `plan with object containing AnyT field still emits object`() {
-        val planner = EmissionPlanner(NameResolver())
+        val planner = ModelPlanner(TypeNameAllocator())
         val obj = TypeDef.ObjectT(
             "Container",
             listOf(
@@ -371,7 +371,7 @@ class EmissionPlannerTest {
 
     @Test
     fun `plan uses NameResolver to assign unique names`() {
-        val planner = EmissionPlanner(NameResolver())
+        val planner = ModelPlanner(TypeNameAllocator())
 
         // Create two structurally different objects with the same name hint
         val obj1 = TypeDef.ObjectT(

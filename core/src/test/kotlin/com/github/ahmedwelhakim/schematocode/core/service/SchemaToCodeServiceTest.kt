@@ -10,7 +10,7 @@ class SchemaToCodeServiceTest {
     fun `generateFromJson returns string`() {
         val emitter = object : CodeEmitter {
             override fun emit(
-                plan: com.github.ahmedwelhakim.schematocode.core.emit.EmissionPlan,
+                plan: com.github.ahmedwelhakim.schematocode.core.emit.ModelPlan,
                 config: GeneratorConfig
             ): String = "code"
         }

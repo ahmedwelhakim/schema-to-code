@@ -9,13 +9,13 @@ class CodeEmitterTest {
     fun `interface is implemented by mock`() {
         val emitter = object : CodeEmitter {
             override fun emit(
-                plan: EmissionPlan,
+                plan: ModelPlan,
                 config: GeneratorConfig
             ): String = "ok"
         }
         assertTrue(
             emitter.emit(
-                EmissionPlan(emptyList()),
+                ModelPlan(emptyList()),
                 GeneratorConfig()
             ).isNotEmpty()
         )

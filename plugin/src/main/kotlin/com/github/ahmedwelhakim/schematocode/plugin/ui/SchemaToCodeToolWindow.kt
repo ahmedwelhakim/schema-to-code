@@ -1,6 +1,7 @@
 package com.github.ahmedwelhakim.schematocode.plugin.ui
 
 import com.github.ahmedwelhakim.schematocode.core.config.GeneratorConfig
+import com.github.ahmedwelhakim.schematocode.core.config.ModelEmissionMode
 import com.github.ahmedwelhakim.schematocode.core.config.TargetLanguage
 import com.github.ahmedwelhakim.schematocode.core.emit.LanguageOptions
 import com.github.ahmedwelhakim.schematocode.core.language.LanguageDescriptor
@@ -15,15 +16,23 @@ import com.github.ahmedwelhakim.schematocode.plugin.language.LanguageRegistry
 import com.github.ahmedwelhakim.schematocode.plugin.language.getLanguageID
 import com.github.ahmedwelhakim.schematocode.plugin.util.withEnumTranslation
 import com.intellij.lang.Language
+import com.intellij.notification.NotificationGroupManager
+import com.intellij.notification.NotificationType
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.ex.EditorEx
+import com.intellij.openapi.ide.CopyPasteManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.SimpleToolWindowPanel
 import com.intellij.openapi.ui.Splitter
 import com.intellij.ui.LanguageTextField
 import com.intellij.ui.dsl.builder.Align
-import com.intellij.ui.dsl.builder.bindItem
 import com.intellij.ui.dsl.builder.panel
+import com.intellij.util.ui.UIUtil
+import kotlinx.coroutines.launch
 import java.awt.BorderLayout
+import java.awt.Cursor
+import java.awt.datatransfer.StringSelection
+import javax.swing.JButton
 import javax.swing.JComponent
 import javax.swing.JPanel
 import javax.swing.JScrollPane
@@ -36,11 +45,18 @@ class SchemaToCodeToolWindow(private val project: Project) : SimpleToolWindowPan
 
     private val outputEditorContainer = JPanel(BorderLayout())
     private lateinit var outputEditor: LanguageTextField
+    private lateinit var mainSplitter: Splitter
 
     private var currentDescriptor: LanguageDescriptor<*> = TypescriptLanguage
     private var currentOptions: LanguageOptions = currentDescriptor.defaultOptions()
     private val generatorConfig = GeneratorConfig()
     private val optionsPanel = JPanel(BorderLayout())
+    private val scope = kotlinx.coroutines.CoroutineScope(
+        kotlinx.coroutines.SupervisorJob() +
+                kotlinx.coroutines.Dispatchers.Default
+    )
+    private var regenerateJob: kotlinx.coroutines.Job? = null
+
 
     init {
         inputEditor.text = """
@@ -82,73 +98,165 @@ class SchemaToCodeToolWindow(private val project: Project) : SimpleToolWindowPan
 }
     """.trimIndent()
         setContent(buildUi())
+        mainSplitter.addComponentListener(object : java.awt.event.ComponentAdapter() {
+            override fun componentResized(e: java.awt.event.ComponentEvent?) {
+                adjustSplitterOrientation()
+            }
+        })
         rebuildOptionsPanel()
         rebuildOutputEditor(currentDescriptor.targetLanguage)
+        inputEditor.document.addDocumentListener(
+            object : com.intellij.openapi.editor.event.DocumentListener {
+                override fun documentChanged(event: com.intellij.openapi.editor.event.DocumentEvent) {
+                    scheduleRegeneration()
+                }
+            }
+        )
+        writeText(generate())
+    }
+
+    private fun writeText(text: String) {
+        ApplicationManager.getApplication().invokeLater {
+            outputEditor.text = text
+        }
     }
 
     private fun buildUi(): JComponent = panel {
 
+        // ============================================================
+        // Top Toolbar Row
+        // ============================================================
         row {
-            comboBox(TargetLanguage.entries)
-                .label("Language:")
-                .withEnumTranslation { it.bundleKey }
-                .bindItem(
-                    { currentDescriptor.targetLanguage },
-                    {
-                        currentDescriptor = LanguageRegistry.getLanguageDescriptor(it!!)
-                        currentOptions = currentDescriptor.defaultOptions()
 
-                        rebuildOptionsPanel()
-                        rebuildOutputEditor(it)
-                        regenerate()
+            panel {
+                row {
+                    label("Language").applyToComponent {
+                        foreground = UIUtil.getContextHelpForeground()
                     }
-                )
-            comboBox(NamingStrategyType.entries)
-                .label("Naming Strategy")
-                .applyToComponent {
-                    selectedItem = generatorConfig.namingStrategyType
                 }
-                .onChanged {
-                    generatorConfig.namingStrategyType = it.selectedItem!! as NamingStrategyType
-                }
-                .withEnumTranslation { it.bundleKey }
+                row {
+                    comboBox(TargetLanguage.entries)
+                        .withEnumTranslation { it.bundleKey }
+                        .align(Align.FILL)
+                        .applyToComponent {
+                            selectedItem = currentDescriptor.targetLanguage
+                        }
+                        .onChanged {
 
-            checkBox("Inline")
-                .applyToComponent {
-                    isSelected = generatorConfig.inlineObjects
+                            currentDescriptor =
+                                LanguageRegistry.getLanguageDescriptor(it.selectedItem as TargetLanguage)
+                            currentOptions = currentDescriptor.defaultOptions()
+                            writeText(generate())
+                        }
                 }
-                .onChanged {
-                    generatorConfig.inlineObjects = it.isSelected
+            }.resizableColumn()
+
+            panel {
+                row {
+                    label("Naming Strategy").applyToComponent {
+                        foreground = UIUtil.getContextHelpForeground()
+                    }
                 }
+                row {
+                    comboBox(NamingStrategyType.entries)
+                        .withEnumTranslation { it.bundleKey }
+                        .align(Align.FILL)
+                        .applyToComponent {
+                            selectedItem = generatorConfig.namingStrategyType
+                        }
+                        .onChanged {
+                            generatorConfig.namingStrategyType = it.selectedItem as NamingStrategyType
+                            writeText(generate())
+                        }
+
+                }
+            }.resizableColumn()
+
+            panel {
+                row {
+                    label("Mode").applyToComponent {
+                        foreground = UIUtil.getContextHelpForeground()
+                    }
+                }
+                row {
+                    comboBox(ModelEmissionMode.entries)
+                        .withEnumTranslation { it.bundleKey }
+                        .align(Align.FILL)
+                        .applyToComponent {
+                            selectedItem = generatorConfig.emissionMode
+                        }
+                        .onChanged {
+                            generatorConfig.emissionMode = it.selectedItem as ModelEmissionMode
+                            writeText(generate())
+                        }
+                }
+            }.resizableColumn()
+
+
         }
 
+
+        // ============================================================
+        // Editors Area (Resizable)
+        // ============================================================
         row {
-            cell(
-                Splitter(false, 0.5f, 0.1f, 0.9f).apply {
-                    firstComponent = JScrollPane(inputEditor).apply {
-                        verticalScrollBar.unitIncrement = 12
-                        horizontalScrollBar.unitIncrement = 12
+            mainSplitter = Splitter(false, 0.5f).apply {
+                firstComponent = JScrollPane(inputEditor).apply {
+                    verticalScrollBar.unitIncrement = 12
+                    horizontalScrollBar.unitIncrement = 12
 
-                    }
-                    secondComponent = JScrollPane(outputEditorContainer).apply {
-                        verticalScrollBar.unitIncrement = 12
-                        horizontalScrollBar.unitIncrement = 12
-
-                    }
                 }
+                secondComponent = JScrollPane(outputEditorContainer).apply {
+                    verticalScrollBar.unitIncrement = 12
+                    horizontalScrollBar.unitIncrement = 12
+                }
+                dividerWidth = 12
+            }
+
+
+            cell(
+                mainSplitter
             ).align(Align.FILL)
         }.resizableRow()
-
-        row {
-            cell(optionsPanel).align(Align.FILL)
+        // Bottom bar with copy button
+        val bottomPanel = JPanel(BorderLayout()).apply {
+            border = javax.swing.BorderFactory.createEmptyBorder(4, 8, 4, 8)
         }
 
-        row {
-            button("Generate") {
-                regenerate()
+        val copyButton = JButton("Copy").apply {
+            toolTipText = "Copy generated code to clipboard"
+            isFocusable = false
+            cursor = Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)
+            addActionListener {
+                CopyPasteManager.getInstance()
+                    .setContents(StringSelection(outputEditor.text))
+
+                showCopyNotification()
             }
         }
+
+        bottomPanel.add(copyButton, BorderLayout.EAST)
+
+        row {
+            cell(bottomPanel)
+                .align(Align.FILL)
+        }
+        // ============================================================
+        // Advanced Options Section (Cleaner Layout)
+        // ============================================================
+
+        collapsibleGroup(
+            "Advanced Options",
+            true
+        ) {
+            row {
+                cell(optionsPanel)
+                    .align(Align.FILL)
+            }
+        }
+
     }
+
 
     private fun buildOptionsPanel(
         defs: List<OptionDef<*>>,
@@ -201,18 +309,18 @@ class SchemaToCodeToolWindow(private val project: Project) : SimpleToolWindowPan
         optionsPanel.repaint()
     }
 
-    private fun regenerate() {
+    private fun generate(): String {
         try {
             @Suppress("UNCHECKED_CAST")
             val emitter = (currentDescriptor as LanguageDescriptor<LanguageOptions>).createEmitter(currentOptions)
-            outputEditor.text = SchemaToCodeService.generateFromJson(
+            return SchemaToCodeService.generateFromJson(
                 json = inputEditor.text,
                 rootName = "Root",
                 emitter = emitter,
                 config = generatorConfig
             )
         } catch (e: Exception) {
-            outputEditor.text = "// Error\n// ${e.message}"
+            return "// Error\n// ${e.message}"
         }
     }
 
@@ -220,14 +328,21 @@ class SchemaToCodeToolWindow(private val project: Project) : SimpleToolWindowPan
         val oldText = if (::outputEditor.isInitialized) outputEditor.text else ""
 
         outputEditorContainer.removeAll()
+        outputEditorContainer.layout = BorderLayout()
 
+        // Create editor
         outputEditor = createEditor(getLanguageID(newLanguage))
         outputEditor.text = oldText
 
+        // Center editor
         outputEditorContainer.add(outputEditor, BorderLayout.CENTER)
+
+
+
         outputEditorContainer.revalidate()
         outputEditorContainer.repaint()
     }
+
 
     private fun createEditor(
         languageId: LanguageId,
@@ -251,6 +366,41 @@ class SchemaToCodeToolWindow(private val project: Project) : SimpleToolWindowPan
             }
         }
     }
+
+    private fun adjustSplitterOrientation() {
+        val widthThreshold = 600
+
+        val shouldBeVertical = width < widthThreshold
+
+        if (mainSplitter.orientation !=
+            if (shouldBeVertical) true else false
+        ) {
+            mainSplitter.orientation = shouldBeVertical
+        }
+    }
+
+    private fun scheduleRegeneration() {
+        regenerateJob?.cancel()
+
+        regenerateJob = scope.launch {
+            kotlinx.coroutines.delay(400)
+            val res = generate()
+            ApplicationManager.getApplication().invokeLater {
+                writeText(res)
+            }
+        }
+    }
+
+    private fun showCopyNotification() {
+        NotificationGroupManager.getInstance()
+            .getNotificationGroup("SchemaToCode")
+            .createNotification(
+                "Copied to clipboard",
+                NotificationType.INFORMATION
+            )
+            .notify(project)
+    }
+
 }
 
 

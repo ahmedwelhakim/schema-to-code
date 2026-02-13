@@ -18,4 +18,7 @@ enum class MessageKey(override val bundleKey: String) : MessageKeyHolder {
     SNAKE("namingStrategies.snake"),
     KEBAB("namingStrategies.kebab"),
     IDENTITY("namingStrategies.identity"),
+    MODEL_EMISSION_MODE("languageOptions.modelEmissionMode"),
+    SEPARATE("languageOptions.modelEmissionMode.separate"),
+    NESTED("languageOptions.modelEmissionMode.nested")
 }

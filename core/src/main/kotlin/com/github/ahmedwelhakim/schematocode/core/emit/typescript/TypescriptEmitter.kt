@@ -1,9 +1,10 @@
 package com.github.ahmedwelhakim.schematocode.core.emit.typescript
 
 import com.github.ahmedwelhakim.schematocode.core.config.GeneratorConfig
+import com.github.ahmedwelhakim.schematocode.core.config.ModelEmissionMode
 import com.github.ahmedwelhakim.schematocode.core.emit.CodeEmitter
-import com.github.ahmedwelhakim.schematocode.core.emit.EmissionPlan
-import com.github.ahmedwelhakim.schematocode.core.emit.EmissionUnit
+import com.github.ahmedwelhakim.schematocode.core.emit.ModelDeclaration
+import com.github.ahmedwelhakim.schematocode.core.emit.ModelPlan
 import com.github.ahmedwelhakim.schematocode.core.ir.Field
 import com.github.ahmedwelhakim.schematocode.core.ir.ScalarType
 import com.github.ahmedwelhakim.schematocode.core.ir.TypeDef
@@ -14,6 +15,7 @@ import com.github.ahmedwelhakim.schematocode.core.resolve.SymbolTable
 class TypescriptEmitter(
     private val options: TypescriptOptions
 ) : CodeEmitter {
+
     private var indentLevel = 0
     private val indentSize = 4
 
@@ -22,96 +24,92 @@ class TypescriptEmitter(
     private lateinit var naming: NamingStrategy
 
     override fun emit(
-        plan: EmissionPlan,
+        plan: ModelPlan,
         config: GeneratorConfig
     ): String = buildString {
 
         this@TypescriptEmitter.config = config
         this@TypescriptEmitter.naming = config.namingStrategyType.create()
 
-        if (config.inlineObjects) {
-            emitInlineRoot(plan.root)
+        if (config.emissionMode == ModelEmissionMode.NESTED) {
+            emitRootInline(plan.root)
             return@buildString
         }
 
         symbols = plan.symbols
 
-        // Emit named models (Root first)
         plan.units
             .asReversed()
             .forEach { unit ->
-                emitNamedObject(unit)
-                appendLine()
+                emitNamedModel(unit)
+                line()
             }
 
-        // If root is not object, emit alias
         if (plan.root !is TypeDef.ObjectT) {
-            emitRootAlias(plan.root)
+            line("export type ${config.name} = ${emitType(plan.root, true)}")
         }
     }
 
     // ============================================================
-    // Separate Model Mode
+    // Separate Mode
     // ============================================================
 
-    private fun StringBuilder.emitNamedObject(unit: EmissionUnit) {
-
-        when (options.modelKind) {
+    private fun StringBuilder.emitNamedModel(unit: ModelDeclaration) {
+        val header = when (options.modelKind) {
             TypescriptModelKind.INTERFACE ->
-                appendLine("export interface ${unit.name} {")
+                "export interface ${unit.name}"
 
             TypescriptModelKind.TYPE_ALIAS ->
-                appendLine("export type ${unit.name} = {")
+                "export type ${unit.name} ="
         }
-        indentLevel++
-        unit.type.fields.forEach { field ->
-            appendLine("${indent()}${emitField(field, separate = true)}")
-        }
-        indentLevel--
-        appendLine("}")
-    }
 
-    private fun StringBuilder.emitRootAlias(root: TypeDef) {
-        appendLine(
-            "export type ${config.name} = ${emitType(root, separate = true)}"
-        )
+        block(header) {
+            emitObjectBody(unit.type, separate = true)
+        }
     }
 
     // ============================================================
     // Inline Mode
     // ============================================================
 
-    private fun StringBuilder.emitInlineRoot(root: TypeDef) {
+    private fun StringBuilder.emitRootInline(root: TypeDef) {
         when (root) {
 
             is TypeDef.ObjectT -> {
-                when (options.modelKind) {
+                val header = when (options.modelKind) {
                     TypescriptModelKind.INTERFACE ->
-                        appendLine("export interface ${config.name} {")
+                        "export interface ${config.name}"
 
                     TypescriptModelKind.TYPE_ALIAS ->
-                        appendLine("export type ${config.name} = {")
+                        "export type ${config.name} ="
                 }
 
-                indentLevel++
-                root.fields.forEach { field ->
-                    appendLine("${indent()}${emitField(field, separate = false)}")
+                block(header) {
+                    emitObjectBody(root, separate = false)
                 }
-
-                indentLevel--
-                appendLine("${indent()}}")
             }
 
             else -> {
-                appendLine(
-                    "export type ${config.name} = ${emitType(root, separate = false)}"
-                )
+                line("export type ${config.name} = ${emitType(root, false)}")
             }
         }
     }
 
     // ============================================================
-    // Field Emission
+    // Shared Object Body
+    // ============================================================
+
+    private fun StringBuilder.emitObjectBody(
+        obj: TypeDef.ObjectT,
+        separate: Boolean
+    ) {
+        obj.fields.forEach { field ->
+            line(emitField(field, separate))
+        }
+    }
+
+    // ============================================================
+    // Field
     // ============================================================
 
     private fun emitField(
@@ -121,12 +119,11 @@ class TypescriptEmitter(
         val name = naming.fieldName(field.name)
         val optional = if (field.optional) "?" else ""
         val type = emitType(field.type, separate)
-
         return "$name$optional: $type;"
     }
 
     // ============================================================
-    // Type Emission
+    // Type
     // ============================================================
 
     private fun emitType(
@@ -157,23 +154,52 @@ class TypescriptEmitter(
                 }
 
             is TypeDef.ObjectT ->
-                if (separate) {
+                if (separate)
                     symbols.nameOf(type)
-                } else {
+                else
                     buildInlineObject(type)
-                }
         }
 
     private fun buildInlineObject(obj: TypeDef.ObjectT): String =
         buildString {
-            appendLine("{")
-            indentLevel++
-            obj.fields.forEach {
-                appendLine("${indent()}${emitField(it, separate = false)}")
+            separateBlock() {
+                emitObjectBody(obj, false)
             }
-            indentLevel--
-            append("${indent()}}")
         }
 
-    private fun indent(): String = " ".repeat(indentLevel * indentSize)
+    // ============================================================
+    // Pretty Printer Helpers
+    // ============================================================
+
+    private fun StringBuilder.block(
+        header: String,
+        body: StringBuilder.() -> Unit
+    ) {
+        line("$header {")
+        indentLevel++
+        body()
+        indentLevel--
+        line("}")
+    }
+
+    private fun StringBuilder.separateBlock(
+        body: StringBuilder.() -> Unit
+    ) {
+        appendLine("{")
+        indentLevel++
+        body()
+        indentLevel--
+        append("${indent()}}")
+    }
+
+    private fun StringBuilder.line(text: String = "") {
+        if (text.isEmpty()) {
+            appendLine()
+        } else {
+            appendLine("${indent()}$text")
+        }
+    }
+
+    private fun indent(): String =
+        " ".repeat(indentLevel * indentSize)
 }

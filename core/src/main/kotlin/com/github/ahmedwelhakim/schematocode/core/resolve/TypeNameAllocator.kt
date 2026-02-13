@@ -2,7 +2,7 @@ package com.github.ahmedwelhakim.schematocode.core.resolve
 
 import com.github.ahmedwelhakim.schematocode.core.ir.TypeDef
 
-class NameResolver {
+class TypeNameAllocator {
 
     private val symbols = SymbolTable()
 
@@ -11,11 +11,11 @@ class NameResolver {
             when (type) {
                 is TypeDef.ObjectT -> {
                     val base = hint ?: "Anonymous"
-                    val semanticKey = SemanticKey(
+                    val typeIdentity = TypeIdentity(
                         nameHint = base,
                         structure = type
                     )
-                    symbols.declare(type, semanticKey, base)
+                    symbols.declare(type, typeIdentity, base)
 
                     type.fields.forEach {
                         visit(it.type, it.name)

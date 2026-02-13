@@ -5,6 +5,6 @@ import com.github.ahmedwelhakim.schematocode.core.naming.NamingStrategyType
 
 data class GeneratorConfig(
     var namingStrategyType: NamingStrategyType = NamingStrategyType.IDENTITY,
-    var inlineObjects: Boolean = true,
+    var emissionMode: ModelEmissionMode = ModelEmissionMode.SEPARATE,
     var name: String = "Root"
 )

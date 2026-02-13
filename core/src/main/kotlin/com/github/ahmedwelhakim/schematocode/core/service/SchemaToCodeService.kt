@@ -2,10 +2,10 @@ package com.github.ahmedwelhakim.schematocode.core.service
 
 import com.github.ahmedwelhakim.schematocode.core.config.GeneratorConfig
 import com.github.ahmedwelhakim.schematocode.core.emit.CodeEmitter
-import com.github.ahmedwelhakim.schematocode.core.emit.EmissionPlanner
+import com.github.ahmedwelhakim.schematocode.core.emit.ModelPlanner
 import com.github.ahmedwelhakim.schematocode.core.infer.json.inferFromJson
 import com.github.ahmedwelhakim.schematocode.core.normalize.TypeNormalizer
-import com.github.ahmedwelhakim.schematocode.core.resolve.NameResolver
+import com.github.ahmedwelhakim.schematocode.core.resolve.TypeNameAllocator
 
 object SchemaToCodeService {
     fun generateFromJson(
@@ -17,7 +17,7 @@ object SchemaToCodeService {
 
         val ir = inferFromJson(rootName, json)
         val normalized = TypeNormalizer.normalize(ir)
-        val plan = EmissionPlanner(NameResolver()).plan(normalized, rootName)
+        val plan = ModelPlanner(TypeNameAllocator()).plan(normalized, rootName)
 
         return emitter.emit(plan, config)
     }
