@@ -8,6 +8,7 @@ import com.github.ahmedwelhakim.schematocode.core.emit.typescript.TypescriptOpti
 import com.github.ahmedwelhakim.schematocode.core.emit.typescript.TypescriptOptions
 import com.github.ahmedwelhakim.schematocode.core.options.EnumOption
 import com.github.ahmedwelhakim.schematocode.core.options.OptionDef
+import com.github.ahmedwelhakim.schematocode.core.options.OptionKey
 
 object TypescriptLanguage : LanguageDescriptor<TypescriptOptions> {
     override val targetLanguage: TargetLanguage = TargetLanguage.TYPESCRIPT
@@ -20,4 +21,28 @@ object TypescriptLanguage : LanguageDescriptor<TypescriptOptions> {
             TypescriptModelKind.entries.toTypedArray()
         ),
     )
+
+    override fun parseOptionKey(name: String?): OptionKey? =
+        if (name == null) name else
+            runCatching { TypescriptOptionKey.valueOf(name) }.getOrNull()
+
+    override fun parseOptionValue(key: OptionKey, value: String?): Any? =
+        if (value == null) null
+        else when (key) {
+            TypescriptOptionKey.MODEL_KIND ->
+                runCatching { TypescriptModelKind.valueOf(value) }.getOrNull()
+
+            else -> null
+        }
+
+    override fun parseOptionFromMap(map: Map<String, String>): TypescriptOptions {
+        val modelKindStringValue = map["${TargetLanguage.TYPESCRIPT.name}:${TypescriptOptionKey.MODEL_KIND.name}"]
+        return if (modelKindStringValue != null)
+            TypescriptOptions(
+                modelKind = parseOptionValue(
+                    TypescriptOptionKey.MODEL_KIND,
+                    modelKindStringValue
+                ) as TypescriptModelKind
+            ) else defaultOptions()
+    }
 }

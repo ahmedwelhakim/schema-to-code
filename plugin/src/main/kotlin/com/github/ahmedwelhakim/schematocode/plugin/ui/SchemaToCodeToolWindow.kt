@@ -6,7 +6,7 @@ import com.intellij.openapi.ui.SimpleToolWindowPanel
 
 class SchemaToCodeToolWindow(
     project: Project
-) : SimpleToolWindowPanel(true, true), Disposable {
+) : SimpleToolWindowPanel(true, false), Disposable {
 
     var panel = SchemaToCodePanel(project)
 

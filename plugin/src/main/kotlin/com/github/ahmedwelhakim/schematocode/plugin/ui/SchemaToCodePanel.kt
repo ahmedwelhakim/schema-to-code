@@ -4,6 +4,9 @@ import com.github.ahmedwelhakim.schematocode.core.config.ModelEmissionMode
 import com.github.ahmedwelhakim.schematocode.core.config.TargetLanguage
 import com.github.ahmedwelhakim.schematocode.core.i18n.MessageKeyHolder
 import com.github.ahmedwelhakim.schematocode.core.naming.NamingStrategyType
+import com.github.ahmedwelhakim.schematocode.core.options.BooleanOption
+import com.github.ahmedwelhakim.schematocode.core.options.EnumOption
+import com.github.ahmedwelhakim.schematocode.core.options.OptionDef
 import com.github.ahmedwelhakim.schematocode.plugin.language.LanguageId
 import com.github.ahmedwelhakim.schematocode.plugin.util.withEnumTranslation
 import com.github.ahmedwelhakim.schematocode.plugin.viewmodel.SchemaToCodeViewModel
@@ -18,6 +21,7 @@ import com.intellij.ui.LanguageTextField
 import com.intellij.ui.dsl.builder.Align
 import com.intellij.ui.dsl.builder.Row
 import com.intellij.ui.dsl.builder.panel
+import com.intellij.ui.layout.selected
 import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -39,11 +43,13 @@ class SchemaToCodePanel(
 
     private val inputEditor = EditorFactory.create(project, LanguageId.JSON)
     private lateinit var outputEditor: LanguageTextField
-    private val outputContainer = JPanel(BorderLayout())
     private lateinit var splitter: Splitter
 
     init {
         add(buildUi(), BorderLayout.CENTER)
+        ApplicationManager.getApplication().invokeLater {
+            inputEditor.requestFocusInWindow()
+        }
         observeState()
         observeEditorSize()
     }
@@ -61,23 +67,44 @@ class SchemaToCodePanel(
         // ----------------------------
         // Toolbar
         // ----------------------------
-        row {
+        collapsibleGroup(
+            "Settings",
+            true
+        ) {
+            row {
 
-            enumSelector(
-                "Language",
-                TargetLanguage.entries
-            ) { viewModel.onLanguageChanged(it) }
+                enumSelector(
+                    "Language",
+                    TargetLanguage.entries,
+                    viewModel.state.value.targetLanguage
+                ) { viewModel.onLanguageChanged(it) }
 
-            enumSelector(
-                "Naming Strategy",
-                NamingStrategyType.entries
-            ) { viewModel.onNamingChanged(it) }
+                enumSelector(
+                    "Naming Strategy",
+                    NamingStrategyType.entries,
+                    viewModel.state.value.namingStrategy
+                ) { viewModel.onNamingChanged(it) }
 
-            enumSelector(
-                "Mode",
-                ModelEmissionMode.entries
-            ) { viewModel.onEmissionModeChanged(it) }
+                enumSelector(
+                    "Mode",
+                    ModelEmissionMode.entries,
+                    viewModel.state.value.emissionMode
+                ) { viewModel.onEmissionModeChanged(it) }
 
+            }
+
+            collapsibleGroup(
+                "Language Options",
+                true
+            ) {
+
+                buildLanguageOptions().forEach {
+                    row {
+                        cell(it)
+                            .align(Align.FILL)
+                    }
+                }
+            }
         }
 
         // ----------------------------
@@ -85,7 +112,11 @@ class SchemaToCodePanel(
         // ----------------------------
         row {
             splitter = Splitter(false, 0.5f).apply {
-                firstComponent = JScrollPane(inputEditor)
+                firstComponent = JScrollPane(inputEditor).apply {
+                    verticalScrollBar.unitIncrement = 12
+                    horizontalScrollBar.unitIncrement = 12
+
+                }
                 secondComponent = buildOutputArea()
                 dividerWidth = 10
             }
@@ -93,31 +124,95 @@ class SchemaToCodePanel(
             cell(splitter).align(Align.FILL)
         }.resizableRow()
 
+        // ----------------------------
+        // Copy Button
+        // ----------------------------
+        row {
+            val copyButton = JButton("Copy").apply {
+                isFocusable = false
+                cursor = Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)
+                addActionListener { copyOutput() }
+            }
+
+            val bottomBar = JPanel(BorderLayout()).apply {
+                border = BorderFactory.createEmptyBorder(12, 8, 0, 8)
+                add(copyButton, BorderLayout.EAST)
+
+            }
+
+            cell(bottomBar).align(Align.FILL)
+        }
+
+
     }
 
     private fun buildOutputArea(): JComponent {
         outputEditor = EditorFactory.create(project, LanguageId.TYPESCRIPT)
 
-        val copyButton = JButton("Copy").apply {
-            isFocusable = false
-            cursor = Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)
-            addActionListener { copyOutput() }
-        }
-
-        val bottomBar = JPanel(BorderLayout()).apply {
-            border = BorderFactory.createEmptyBorder(4, 8, 4, 8)
-            add(copyButton, BorderLayout.EAST)
-        }
-
         return JPanel(BorderLayout()).apply {
-            add(JScrollPane(outputEditor), BorderLayout.CENTER)
-            add(bottomBar, BorderLayout.SOUTH)
+            add(JScrollPane(outputEditor).apply {
+                verticalScrollBar.unitIncrement = 12
+                horizontalScrollBar.unitIncrement = 12
+
+            }, BorderLayout.CENTER)
+
+        }
+    }
+
+    private fun buildLanguageOptions(): List<JComponent> {
+
+        val optionDefs = viewModel.state.value.optionDefs
+        return optionDefs.map { optionDef ->
+            val key = optionDef.key
+            val langOption = viewModel.state.value.getLanguageOption(optionDef.key)
+            val initialValue = viewModel.state.value.descriptor.parseOptionValue(
+                key,
+                langOption
+            ) ?: optionDef.default
+            buildOptionsPanel(
+                optionDef,
+                initialValue!!
+            ) {
+                viewModel.onLanguageOptionChanged(optionDef.key, it as Enum<*>)
+            }
+        }
+    }
+
+    private fun buildOptionsPanel(
+        def: OptionDef<*>,
+        initialValue: Any,
+        onChange: (Any) -> Unit
+    ): JComponent = panel {
+        when (def) {
+            is EnumOption<*> -> row {
+                comboBox(def.values.toList())
+                    .withEnumTranslation { it.bundleKey }
+                    .applyToComponent {
+                        selectedItem =
+                            initialValue
+                    }
+                    .onChanged {
+                        onChange(it.selectedItem!!)
+                    }
+            }
+
+            is BooleanOption -> row {
+                checkBox(def.key.toString())
+                    .onChanged { onChange(it) }
+                    .applyToComponent {
+                        isSelected = initialValue as Boolean
+                    }.onChanged {
+                        onChange(it.selected)
+                    }
+            }
+
         }
     }
 
     private fun <T> Row.enumSelector(
         labelText: String,
         values: Collection<T>,
+        initialValue: T,
         onChange: (T) -> Unit
     ) where T : Enum<T>, T : MessageKeyHolder {
         panel {
@@ -130,6 +225,9 @@ class SchemaToCodePanel(
                 comboBox(values)
                     .withEnumTranslation { it.bundleKey }
                     .align(Align.FILL)
+                    .applyToComponent {
+                        selectedItem = initialValue
+                    }
                     .onChanged {
                         @Suppress("UNCHECKED_CAST")
                         onChange(it.selectedItem as T)

@@ -5,6 +5,7 @@ import com.github.ahmedwelhakim.schematocode.core.config.ModelEmissionMode
 import com.github.ahmedwelhakim.schematocode.core.config.TargetLanguage
 import com.github.ahmedwelhakim.schematocode.core.emit.LanguageOptions
 import com.github.ahmedwelhakim.schematocode.core.language.LanguageDescriptor
+import com.github.ahmedwelhakim.schematocode.core.options.OptionKey
 import com.github.ahmedwelhakim.schematocode.core.service.SchemaToCodeService
 import com.github.ahmedwelhakim.schematocode.plugin.language.LanguageRegistry
 import com.github.ahmedwelhakim.schematocode.plugin.state.SchemaToCodeSettingsService
@@ -15,7 +16,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
 
 class SchemaToCodeViewModel(
-    private val project: Project
+    project: Project
 ) {
     val generationController: GenerationController
 
@@ -33,12 +34,17 @@ class SchemaToCodeViewModel(
         SchemaToCodeSettingsService.getInstance(project)
 
 
-    private val _state = MutableStateFlow(
-        SchemaToCodeUiState(
-            targetLanguage = settings.state.targetLanguage,
-            namingStrategy = settings.state.namingStrategy,
-            emissionMode = settings.state.emissionMode,
-            jsonInput = """
+    private val _state: MutableStateFlow<SchemaToCodeUiState>
+
+    val state: StateFlow<SchemaToCodeUiState>
+
+    init {
+        val uiState = MutableStateFlow(
+            SchemaToCodeUiState(
+                targetLanguage = settings.state.targetLanguage,
+                namingStrategy = settings.state.namingStrategy,
+                emissionMode = settings.state.emissionMode,
+                jsonInput = """
                 {
   "title": "Example Schema",
   "type": "object",
@@ -76,16 +82,18 @@ class SchemaToCodeViewModel(
   ]
 }
             """.trimIndent()
+            )
         )
-    )
-
-    val state: StateFlow<SchemaToCodeUiState> = _state
+        uiState.value.languageOptions = settings.state.languageOptions
+        _state = uiState
+        state = _state
+    }
 
     private var descriptor =
-        LanguageRegistry.getLanguageDescriptor(_state.value.targetLanguage)
+        state.value.descriptor
 
     private var options: LanguageOptions =
-        descriptor.defaultOptions()
+        state.value.descriptor.parseOptionFromMap(settings.state.languageOptions)
 
     // ============================================================
     // Public Actions
@@ -115,6 +123,13 @@ class SchemaToCodeViewModel(
     fun onEmissionModeChanged(mode: ModelEmissionMode) {
         settings.state.emissionMode = mode
         updateState { copy(emissionMode = mode) }
+        scheduleGeneration()
+    }
+
+    fun onLanguageOptionChanged(key: OptionKey, value: Enum<*>) {
+        state.value.setLanguageOption(key, value)
+        settings.state.languageOptions = state.value.languageOptions.toMap()
+        options = state.value.descriptor.parseOptionFromMap(settings.state.languageOptions)
         scheduleGeneration()
     }
 
