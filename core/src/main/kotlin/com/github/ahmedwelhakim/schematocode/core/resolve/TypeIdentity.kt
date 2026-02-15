@@ -1,8 +1,8 @@
 package com.github.ahmedwelhakim.schematocode.core.resolve
 
-import com.github.ahmedwelhakim.schematocode.core.ir.TypeDef
+import com.github.ahmedwelhakim.schematocode.core.normalize.StructuralKey
 
 data class TypeIdentity(
     val nameHint: String?,
-    val structure: TypeDef
+    val structure: StructuralKey
 )

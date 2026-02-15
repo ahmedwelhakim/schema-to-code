@@ -11,7 +11,8 @@ class SchemaToCodeToolWindowFactory : ToolWindowFactory {
         val panel = SchemaToCodeToolWindow(project)
         val content = ContentFactory.getInstance()
             .createContent(panel, null, false)
-
+        content.setDisposer(panel)
         toolWindow.contentManager.addContent(content)
     }
+
 }

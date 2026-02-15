@@ -11,6 +11,7 @@ import com.github.ahmedwelhakim.schematocode.core.ir.TypeDef
 import com.github.ahmedwelhakim.schematocode.core.naming.NamingStrategy
 import com.github.ahmedwelhakim.schematocode.core.naming.create
 import com.github.ahmedwelhakim.schematocode.core.resolve.SymbolTable
+import com.github.ahmedwelhakim.schematocode.core.util.isValidIdentifier
 
 class TypescriptEmitter(
     private val options: TypescriptOptions
@@ -116,7 +117,10 @@ class TypescriptEmitter(
         field: Field,
         separate: Boolean
     ): String {
-        val name = naming.fieldName(field.name)
+        var name = naming.fieldName(field.name)
+        if (!name.isValidIdentifier()) {
+            name = "'$name'"
+        }
         val optional = if (field.optional) "?" else ""
         val type = emitType(field.type, separate)
         return "$name$optional: $type;"
