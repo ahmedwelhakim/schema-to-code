@@ -1,7 +1,6 @@
 package com.github.ahmedwelhakim.schematocode.core.emit.typescript
 
 import com.github.ahmedwelhakim.schematocode.core.config.GeneratorConfig
-import com.github.ahmedwelhakim.schematocode.core.config.ModelEmissionMode
 import com.github.ahmedwelhakim.schematocode.core.emit.CodeEmitter
 import com.github.ahmedwelhakim.schematocode.core.emit.ModelDeclaration
 import com.github.ahmedwelhakim.schematocode.core.emit.ModelPlan
@@ -52,7 +51,7 @@ class TypescriptEmitter(
         this@TypescriptEmitter.config = config
         this@TypescriptEmitter.naming = config.namingStrategyType.create()
 
-        if (config.emissionMode == ModelEmissionMode.NESTED) {
+        if (options.emissionMode == ModelEmissionMode.NESTED) {
             emitRootInline(plan.root)
             return@buildString
         }

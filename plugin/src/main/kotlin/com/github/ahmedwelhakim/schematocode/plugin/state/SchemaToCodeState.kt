@@ -1,7 +1,7 @@
 package com.github.ahmedwelhakim.schematocode.plugin.state
 
-import com.github.ahmedwelhakim.schematocode.core.config.ModelEmissionMode
 import com.github.ahmedwelhakim.schematocode.core.config.TargetLanguage
+import com.github.ahmedwelhakim.schematocode.core.emit.typescript.ModelEmissionMode
 import com.github.ahmedwelhakim.schematocode.core.naming.NamingStrategyType
 
 /**

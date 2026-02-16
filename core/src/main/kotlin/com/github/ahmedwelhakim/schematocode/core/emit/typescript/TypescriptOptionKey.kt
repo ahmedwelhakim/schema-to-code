@@ -11,5 +11,6 @@ import com.github.ahmedwelhakim.schematocode.core.options.OptionKey
  */
 enum class TypescriptOptionKey(override val bundleKey: String) : OptionKey {
     /** Option key for selecting between interface and type alias generation. */
-    MODEL_KIND(MessageKey.MODEL_KIND.bundleKey)
+    MODEL_KIND(MessageKey.MODEL_KIND.bundleKey),
+    EMISSION_MODE(MessageKey.MODEL_EMISSION_MODE.bundleKey)
 }

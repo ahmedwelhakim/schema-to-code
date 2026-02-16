@@ -28,3 +28,16 @@ fun <C : MessageKeyHolder> Cell<ComboBox<C>>.withEnumTranslation(
         }
     }
 
+fun <C : MessageKeyHolder> ComboBox<C>.withEnumTranslation(
+    keyProvider: (C) -> String
+): ComboBox<C> =
+    apply {
+        renderer = SimpleListCellRenderer.create { label, value, _ ->
+            label.text =
+                if (value != null)
+                    SchemaToCodeBundle.message(keyProvider(value))
+                else
+                    ""
+        }
+    }
+

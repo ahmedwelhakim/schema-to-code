@@ -14,6 +14,7 @@ package com.github.ahmedwelhakim.schematocode.core.options
  * @see EnumOption
  */
 sealed class OptionDef<T>(
+    val i18nName: String,
     val key: OptionKey,
     val default: T
 )

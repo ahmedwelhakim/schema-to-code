@@ -14,7 +14,8 @@ import com.github.ahmedwelhakim.schematocode.core.i18n.MessageKeyHolder
  * @param values All possible values for this option (typically `EnumClass.entries.toTypedArray()`).
  */
 class EnumOption<T : MessageKeyHolder>(
+    i18nName: String,
     key: OptionKey,
     default: T,
     val values: Array<T>
-) : OptionDef<T>(key, default)
+) : OptionDef<T>(i18nName, key, default)

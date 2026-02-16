@@ -1,12 +1,12 @@
 package com.github.ahmedwelhakim.schematocode.plugin.ui
 
-import com.github.ahmedwelhakim.schematocode.core.config.ModelEmissionMode
 import com.github.ahmedwelhakim.schematocode.core.config.TargetLanguage
 import com.github.ahmedwelhakim.schematocode.core.i18n.MessageKeyHolder
 import com.github.ahmedwelhakim.schematocode.core.naming.NamingStrategyType
 import com.github.ahmedwelhakim.schematocode.core.options.BooleanOption
 import com.github.ahmedwelhakim.schematocode.core.options.EnumOption
 import com.github.ahmedwelhakim.schematocode.core.options.OptionDef
+import com.github.ahmedwelhakim.schematocode.plugin.SchemaToCodeBundle
 import com.github.ahmedwelhakim.schematocode.plugin.language.LanguageId
 import com.github.ahmedwelhakim.schematocode.plugin.util.withEnumTranslation
 import com.github.ahmedwelhakim.schematocode.plugin.viewmodel.SchemaToCodeViewModel
@@ -20,9 +20,9 @@ import com.intellij.openapi.ui.Splitter
 import com.intellij.ui.LanguageTextField
 import com.intellij.ui.dsl.builder.Align
 import com.intellij.ui.dsl.builder.Row
+import com.intellij.ui.dsl.builder.RowLayout
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.layout.selected
-import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -86,22 +86,17 @@ class SchemaToCodePanel(
             row {
 
                 enumSelector(
-                    "Language",
+                    "Language: ",
                     TargetLanguage.entries,
                     viewModel.state.value.targetLanguage
                 ) { viewModel.onLanguageChanged(it) }
 
                 enumSelector(
-                    "Naming Strategy",
+                    "Naming Strategy: ",
                     NamingStrategyType.entries,
                     viewModel.state.value.namingStrategy
                 ) { viewModel.onNamingChanged(it) }
 
-                enumSelector(
-                    "Mode",
-                    ModelEmissionMode.entries,
-                    viewModel.state.value.emissionMode
-                ) { viewModel.onEmissionModeChanged(it) }
 
             }
 
@@ -116,20 +111,31 @@ class SchemaToCodePanel(
                             .align(Align.FILL)
                     }
                 }
-            }
-        }
+            }.layout(RowLayout.LABEL_ALIGNED)
+        }.layout(RowLayout.LABEL_ALIGNED)
 
         // ----------------------------
         // Editors
         // ----------------------------
         row {
             splitter = Splitter(false, 0.5f).apply {
-                firstComponent = JScrollPane(inputEditor).apply {
-                    verticalScrollBar.unitIncrement = 12
-                    horizontalScrollBar.unitIncrement = 12
 
+                firstComponent = JPanel(BorderLayout()).apply {
+                    add(JLabel("Input"), BorderLayout.NORTH)
+                    add(
+                        JScrollPane(inputEditor).apply {
+                            verticalScrollBar.unitIncrement = 12
+                            horizontalScrollBar.unitIncrement = 12
+                        },
+                        BorderLayout.CENTER
+                    )
                 }
-                secondComponent = buildOutputArea()
+
+                secondComponent = JPanel(BorderLayout()).apply {
+                    add(JLabel("Output"), BorderLayout.NORTH)
+                    add(buildOutputArea(), BorderLayout.CENTER)
+                }
+
                 dividerWidth = 10
             }
 
@@ -195,24 +201,29 @@ class SchemaToCodePanel(
         initialValue: Any,
         onChange: (Any) -> Unit
     ): JComponent = panel {
+
         when (def) {
-            is EnumOption<*> -> row {
+            is EnumOption<*> -> row(SchemaToCodeBundle.message(def.i18nName)) {
                 comboBox(def.values.toList())
                     .withEnumTranslation { it.bundleKey }
                     .applyToComponent {
                         selectedItem =
                             initialValue
+
+
                     }
                     .onChanged {
                         onChange(it.selectedItem!!)
                     }
             }
 
-            is BooleanOption -> row {
+            is BooleanOption -> row(SchemaToCodeBundle.message(def.i18nName)) {
                 checkBox(def.key.toString())
                     .onChanged { onChange(it) }
                     .applyToComponent {
                         isSelected = initialValue as Boolean
+
+
                     }.onChanged {
                         onChange(it.selected)
                     }
@@ -227,13 +238,11 @@ class SchemaToCodePanel(
         initialValue: T,
         onChange: (T) -> Unit
     ) where T : Enum<T>, T : MessageKeyHolder {
+
         panel {
-            row {
-                label(labelText).applyToComponent {
-                    foreground = UIUtil.getContextHelpForeground()
-                }
-            }
-            row {
+
+            row(labelText) {
+
                 comboBox(values)
                     .withEnumTranslation { it.bundleKey }
                     .align(Align.FILL)
@@ -244,7 +253,7 @@ class SchemaToCodePanel(
                         @Suppress("UNCHECKED_CAST")
                         onChange(it.selectedItem as T)
                     }
-            }
+            }.resizableRow()
         }.resizableColumn()
     }
 

@@ -10,7 +10,8 @@ import com.github.ahmedwelhakim.schematocode.core.options.OptionKey
  *                     Defaults to [TypescriptModelKind.INTERFACE].
  */
 data class TypescriptOptions(
-    val modelKind: TypescriptModelKind = TypescriptModelKind.INTERFACE
+    val modelKind: TypescriptModelKind = TypescriptModelKind.INTERFACE,
+    val emissionMode: ModelEmissionMode = ModelEmissionMode.SEPARATE
 ) : LanguageOptions {
 
     @Suppress("UNCHECKED_CAST")
