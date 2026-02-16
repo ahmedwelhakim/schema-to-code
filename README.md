@@ -113,6 +113,19 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 
 This project is licensed under the MIT License.
 
+## TODO
+
+- [x] Support TypeScript code generation
+- [x] Support JSON input parsing and inference
+- [x] Support multiple naming strategies (camelCase, PascalCase, snake_case, preserve)
+- [x] Support separate and nested type emission modes
+- [x] Real-time code generation and preview in IntelliJ
+- [x] Customizable options per language
+- [ ] Support C# code generation
+- [ ] Support Kotlin code generation
+- [ ] Support Java code generation
+- [ ] Support reading and generating code from OpenAPI schema
+
 ---
 Plugin based on the [IntelliJ Platform Plugin Template][template].
 
