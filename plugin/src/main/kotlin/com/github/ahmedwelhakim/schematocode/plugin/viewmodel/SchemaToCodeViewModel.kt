@@ -6,6 +6,7 @@ import com.github.ahmedwelhakim.schematocode.core.config.TargetLanguage
 import com.github.ahmedwelhakim.schematocode.core.emit.LanguageOptions
 import com.github.ahmedwelhakim.schematocode.core.language.LanguageDescriptor
 import com.github.ahmedwelhakim.schematocode.core.options.OptionKey
+import com.github.ahmedwelhakim.schematocode.core.result.GenerationResult
 import com.github.ahmedwelhakim.schematocode.core.service.SchemaToCodeService
 import com.github.ahmedwelhakim.schematocode.plugin.language.LanguageRegistry
 import com.github.ahmedwelhakim.schematocode.plugin.state.SchemaToCodeSettingsService
@@ -15,6 +16,10 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
 
+/**
+ * ViewModel for the Schema to Code tool window.
+ * Manages UI state and coordinates code generation.
+ */
 class SchemaToCodeViewModel(
     project: Project
 ) {
@@ -39,12 +44,12 @@ class SchemaToCodeViewModel(
     val state: StateFlow<SchemaToCodeUiState>
 
     init {
-        val uiState = MutableStateFlow(
-            SchemaToCodeUiState(
-                targetLanguage = settings.state.targetLanguage,
-                namingStrategy = settings.state.namingStrategy,
-                emissionMode = settings.state.emissionMode,
-                jsonInput = """
+        val initialState = SchemaToCodeUiState(
+            targetLanguage = settings.state.targetLanguage,
+            namingStrategy = settings.state.namingStrategy,
+            emissionMode = settings.state.emissionMode,
+            languageOptions = settings.state.languageOptions,
+            jsonInput = """
                 {
   "title": "Example Schema",
   "type": "object",
@@ -82,10 +87,8 @@ class SchemaToCodeViewModel(
   ]
 }
             """.trimIndent()
-            )
         )
-        uiState.value.languageOptions = settings.state.languageOptions
-        _state = uiState
+        _state = MutableStateFlow(initialState)
         state = _state
     }
 
@@ -127,8 +130,8 @@ class SchemaToCodeViewModel(
     }
 
     fun onLanguageOptionChanged(key: OptionKey, value: Enum<*>) {
-        state.value.setLanguageOption(key, value)
-        settings.state.languageOptions = state.value.languageOptions.toMap()
+        updateState { withLanguageOption(key, value) }
+        settings.state.languageOptions = state.value.languageOptions
         options = state.value.descriptor.parseOptionFromMap(settings.state.languageOptions)
         scheduleGeneration()
     }
@@ -144,43 +147,35 @@ class SchemaToCodeViewModel(
     private fun generate(): String {
         val current = _state.value
 
-        try {
-            updateState { copy(isLoading = true, error = null) }
+        updateState { copy(isLoading = true, error = null) }
 
-            val config = GeneratorConfig(
-                namingStrategyType = current.namingStrategy,
-                emissionMode = current.emissionMode
-            )
+        val config = GeneratorConfig(
+            namingStrategyType = current.namingStrategy,
+            emissionMode = current.emissionMode
+        )
 
-            @Suppress("UNCHECKED_CAST")
-            val emitter =
-                (descriptor as LanguageDescriptor<LanguageOptions>)
-                    .createEmitter(options)
+        @Suppress("UNCHECKED_CAST")
+        val emitter =
+            (descriptor as LanguageDescriptor<LanguageOptions>)
+                .createEmitter(options)
 
-            val result = SchemaToCodeService.generateFromJson(
-                json = current.jsonInput,
-                rootName = "Root",
-                emitter = emitter,
-                config = config
-            )
+        val result = SchemaToCodeService.generateFromJsonSafe(
+            json = current.jsonInput,
+            rootName = "Root",
+            emitter = emitter,
+            config = config
+        )
 
-            updateState {
-                copy(
-                    isLoading = false,
-                    error = null
-                )
+        return when (result) {
+            is GenerationResult.Success -> {
+                updateState { copy(isLoading = false, error = null) }
+                result.code
             }
-            return result
 
-        } catch (e: Exception) {
-            updateState {
-                copy(
-
-                    isLoading = false,
-                    error = e.message
-                )
+            is GenerationResult.Failure -> {
+                updateState { copy(isLoading = false, error = result.message) }
+                "// Error: ${result.message}"
             }
-            return "// Error\n// ${e.message}"
         }
     }
 

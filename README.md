@@ -1,52 +1,119 @@
-# schema-to-code
+# Schema to Code
 
 ![Build](https://github.com/ahmedwelhakim/schema-to-code/workflows/Build/badge.svg)
 [![Version](https://img.shields.io/jetbrains/plugin/v/MARKETPLACE_ID.svg)](https://plugins.jetbrains.com/plugin/MARKETPLACE_ID)
 [![Downloads](https://img.shields.io/jetbrains/plugin/d/MARKETPLACE_ID.svg)](https://plugins.jetbrains.com/plugin/MARKETPLACE_ID)
 
-## Template ToDo list
-- [x] Create a new [IntelliJ Platform Plugin Template][template] project.
-- [ ] Get familiar with the [template documentation][template].
-- [ ] Adjust the [pluginGroup](plugin/gradle.properties) and [pluginName](plugin/gradle.properties), as well as the [id](plugin/src/main/resources/META-INF/plugin.xml) and [sources package](plugin/src/main/kotlin).
-- [ ] Adjust the plugin description in `README` (see [Tips][docs:plugin-description])
-- [ ] Review the [Legal Agreements](https://plugins.jetbrains.com/docs/marketplace/legal-agreements.html?from=IJPluginTemplate).
-- [ ] [Publish a plugin manually](https://plugins.jetbrains.com/docs/intellij/publishing-plugin.html?from=IJPluginTemplate) for the first time.
-- [ ] Set the `MARKETPLACE_ID` in the above README badges. You can obtain it once the plugin is published to JetBrains Marketplace.
-- [ ] Set the [Plugin Signing](https://plugins.jetbrains.com/docs/intellij/plugin-signing.html?from=IJPluginTemplate) related [secrets](https://github.com/JetBrains/intellij-platform-plugin-template#environment-variables).
-- [ ] Set the [Deployment Token](https://plugins.jetbrains.com/docs/marketplace/plugin-upload.html?from=IJPluginTemplate).
-- [ ] Click the <kbd>Watch</kbd> button on the top of the [IntelliJ Platform Plugin Template][template] to be notified about releases containing new features and fixes.
-- [ ] Configure the [CODECOV_TOKEN](https://docs.codecov.com/docs/quick-start) secret for automated test coverage reports on PRs
+An IntelliJ IDEA plugin that generates type-safe code from JSON data. Paste your JSON and instantly get TypeScript
+interfaces, type aliases, and more.
+
+## Features
+
+- **JSON to TypeScript**: Automatically infer types from JSON data
+- **Multiple Output Modes**: Generate separate interfaces or nested inline types
+- **Naming Strategies**: Support for camelCase, PascalCase, snake_case, or preserve original names
+- **Type Merging**: Intelligently merge similar object structures
+- **Real-time Preview**: See generated code as you type
+- **Customizable Options**: Configure output format per language
+
+## Architecture
+
+The project follows a clean multi-module architecture:
+
+```
+schema-to-code/
+├── core/                    # Platform-independent business logic
+│   └── src/main/kotlin/
+│       └── .../core/
+│           ├── config/      # Configuration classes (TargetLanguage, InputFormat, etc.)
+│           ├── emit/        # Code emitters (TypeScript, etc.)
+│           ├── i18n/        # Internationalization support
+│           ├── infer/       # Input parsing (JSON inference)
+│           ├── ir/          # Intermediate representation (TypeDef, Field, etc.)
+│           ├── language/    # Language descriptors
+│           ├── naming/      # Naming strategies (camelCase, PascalCase, etc.)
+│           ├── normalize/   # Type normalization and merging
+│           ├── options/     # Option definitions
+│           ├── resolve/     # Type name resolution
+│           ├── result/      # Result types for error handling
+│           ├── service/     # Main service (SchemaToCodeService)
+│           └── util/        # Utility functions
+│
+└── plugin/                  # IntelliJ IDEA plugin
+    └── src/main/kotlin/
+        └── .../plugin/
+            ├── language/    # Language registry and IDs
+            ├── state/       # Persistent settings
+            ├── ui/          # UI components (panels, editors)
+            ├── util/        # UI utilities
+            └── viewmodel/   # MVVM view models
+```
+
+### Processing Pipeline
+
+```
+JSON Input → Parse (Infer) → Normalize → Plan → Emit → TypeScript Output
+```
+
+1. **Infer**: Parse JSON and create intermediate representation (IR)
+2. **Normalize**: Merge structurally equivalent types
+3. **Plan**: Allocate unique names and collect type declarations
+4. **Emit**: Generate target language code
 
 <!-- Plugin description -->
-This Fancy IntelliJ Platform Plugin is going to be your implementation of the brilliant ideas that you have.
+**Schema to Code** converts JSON data into type-safe code instantly.
 
-This specific section is a source for the [plugin.xml](/src/main/resources/META-INF/plugin.xml) file which will be extracted by the [Gradle](/build.gradle.kts) during the build process.
+Features:
 
-To keep everything working, do not remove `<!-- ... -->` sections. 
+- Generate TypeScript interfaces or type aliases from JSON
+- Multiple naming strategies (camelCase, PascalCase, snake_case)
+- Separate or nested type emission modes
+- Real-time code generation as you type
+
 <!-- Plugin description end -->
 
 ## Installation
 
 - Using the IDE built-in plugin system:
 
-  <kbd>Settings/Preferences</kbd> > <kbd>Plugins</kbd> > <kbd>Marketplace</kbd> > <kbd>Search for "schema-to-code"</kbd> >
+  <kbd>Settings/Preferences</kbd> > <kbd>Plugins</kbd> > <kbd>Marketplace</kbd> > <kbd>Search for "
+  schema-to-code"</kbd> >
   <kbd>Install</kbd>
-
-- Using JetBrains Marketplace:
-
-  Go to [JetBrains Marketplace](https://plugins.jetbrains.com/plugin/MARKETPLACE_ID) and install it by clicking the <kbd>Install to ...</kbd> button in case your IDE is running.
-
-  You can also download the [latest release](https://plugins.jetbrains.com/plugin/MARKETPLACE_ID/versions) from JetBrains Marketplace and install it manually using
-  <kbd>Settings/Preferences</kbd> > <kbd>Plugins</kbd> > <kbd>⚙️</kbd> > <kbd>Install plugin from disk...</kbd>
 
 - Manually:
 
-  Download the [latest release](https://github.com/ahmedwelhakim/schema-to-code/releases/latest) and install it manually using
+  Download the [latest release](https://github.com/ahmedwelhakim/schema-to-code/releases/latest) and install it manually
+  using
   <kbd>Settings/Preferences</kbd> > <kbd>Plugins</kbd> > <kbd>⚙️</kbd> > <kbd>Install plugin from disk...</kbd>
 
+## Usage
+
+1. Open the **Schema to Code** tool window (View → Tool Windows → Schema to Code)
+2. Paste your JSON in the left editor
+3. Configure options (language, naming strategy, emission mode)
+4. Copy the generated code from the right editor
+
+## Building
+
+```bash
+./gradlew build
+```
+
+## Testing
+
+```bash
+./gradlew test
+```
+
+## Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+## License
+
+This project is licensed under the MIT License.
 
 ---
 Plugin based on the [IntelliJ Platform Plugin Template][template].
 
 [template]: https://github.com/JetBrains/intellij-platform-plugin-template
-[docs:plugin-description]: https://plugins.jetbrains.com/docs/intellij/plugin-user-experience.html#plugin-description-and-presentation

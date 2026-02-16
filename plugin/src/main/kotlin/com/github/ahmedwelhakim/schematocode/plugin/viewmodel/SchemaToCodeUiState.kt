@@ -8,35 +8,35 @@ import com.github.ahmedwelhakim.schematocode.core.options.OptionDef
 import com.github.ahmedwelhakim.schematocode.core.options.OptionKey
 import com.github.ahmedwelhakim.schematocode.plugin.language.LanguageRegistry
 
+/**
+ * Immutable UI state for the Schema to Code tool window.
+ * All state changes should be done via copy().
+ */
 data class SchemaToCodeUiState(
     val jsonInput: String = "",
     val output: String = "",
     val targetLanguage: TargetLanguage = TargetLanguage.TYPESCRIPT,
     val namingStrategy: NamingStrategyType = NamingStrategyType.PASCAL,
-
     val emissionMode: ModelEmissionMode = ModelEmissionMode.SEPARATE,
     val isLoading: Boolean = false,
     val error: String? = null,
-    private var _languageOptions: MutableMap<String, String> = mutableMapOf(),
+    val languageOptions: Map<String, String> = emptyMap(),
 ) {
-    var languageOptions: Map<String, String>
-        get() = _languageOptions.toMap()
-        set(value) {
-            _languageOptions = value.toMutableMap()
-        }
-    val descriptor
-        get():LanguageDescriptor<*>
-        = LanguageRegistry.getLanguageDescriptor(targetLanguage)
+    val descriptor: LanguageDescriptor<*>
+        get() = LanguageRegistry.getLanguageDescriptor(targetLanguage)
 
-    val optionDefs
-        get(): List<OptionDef<*>>
-        = descriptor.optionDefs()
+    val optionDefs: List<OptionDef<*>>
+        get() = descriptor.optionDefs()
 
-    fun setLanguageOption(key: OptionKey, value: Enum<*>) {
-        _languageOptions["${targetLanguage.name}:$key"] = value.name
-    }
+    /**
+     * Creates a new state with the specified language option set.
+     */
+    fun withLanguageOption(key: OptionKey, value: Enum<*>): SchemaToCodeUiState =
+        copy(languageOptions = languageOptions + ("${targetLanguage.name}:$key" to value.name))
 
-    fun getLanguageOption(key: OptionKey): String? {
-        return _languageOptions["${targetLanguage.name}:$key"]
-    }
+    /**
+     * Gets the value of a language option.
+     */
+    fun getLanguageOption(key: OptionKey): String? =
+        languageOptions["${targetLanguage.name}:$key"]
 }

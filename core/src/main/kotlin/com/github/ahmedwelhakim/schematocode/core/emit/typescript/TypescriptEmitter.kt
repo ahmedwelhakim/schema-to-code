@@ -13,6 +13,19 @@ import com.github.ahmedwelhakim.schematocode.core.naming.create
 import com.github.ahmedwelhakim.schematocode.core.resolve.SymbolTable
 import com.github.ahmedwelhakim.schematocode.core.util.isValidIdentifier
 
+/**
+ * Code emitter for TypeScript language.
+ *
+ * Generates TypeScript interfaces or type aliases from the model plan.
+ * Supports two emission modes:
+ * - **Separate**: Each object type becomes a separate exported interface/type.
+ * - **Nested**: Types are inlined within their parent structures.
+ *
+ * @property options TypeScript-specific options (e.g., interface vs type alias).
+ *
+ * @see TypescriptOptions
+ * @see TypescriptModelKind
+ */
 class TypescriptEmitter(
     private val options: TypescriptOptions
 ) : CodeEmitter {
@@ -24,11 +37,18 @@ class TypescriptEmitter(
     private lateinit var config: GeneratorConfig
     private lateinit var naming: NamingStrategy
 
+    /**
+     * Emits TypeScript code from the given model plan.
+     *
+     * @param plan The model plan containing type declarations.
+     * @param config The generation configuration.
+     * @return The generated TypeScript source code.
+     */
     override fun emit(
         plan: ModelPlan,
         config: GeneratorConfig
     ): String = buildString {
-
+        // ...existing code...
         this@TypescriptEmitter.config = config
         this@TypescriptEmitter.naming = config.namingStrategyType.create()
 

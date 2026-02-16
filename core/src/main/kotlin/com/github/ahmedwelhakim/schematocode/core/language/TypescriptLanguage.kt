@@ -10,10 +10,23 @@ import com.github.ahmedwelhakim.schematocode.core.options.EnumOption
 import com.github.ahmedwelhakim.schematocode.core.options.OptionDef
 import com.github.ahmedwelhakim.schematocode.core.options.OptionKey
 
+/**
+ * Language descriptor for TypeScript.
+ *
+ * Provides configuration and factory methods for generating TypeScript code.
+ * Supports the following options:
+ * - [TypescriptOptionKey.MODEL_KIND]: Generate interfaces or type aliases.
+ *
+ * @see TypescriptEmitter
+ * @see TypescriptOptions
+ */
 object TypescriptLanguage : LanguageDescriptor<TypescriptOptions> {
     override val targetLanguage: TargetLanguage = TargetLanguage.TYPESCRIPT
+
     override fun defaultOptions(): TypescriptOptions = TypescriptOptions()
+
     override fun createEmitter(options: TypescriptOptions): CodeEmitter = TypescriptEmitter(options)
+
     override fun optionDefs(): List<OptionDef<*>> = listOf(
         EnumOption(
             TypescriptOptionKey.MODEL_KIND,

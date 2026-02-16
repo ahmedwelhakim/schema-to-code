@@ -1,10 +1,33 @@
 package com.github.ahmedwelhakim.schematocode.core.infer.json
 
+import com.github.ahmedwelhakim.schematocode.core.infer.InputParseException
+import com.github.ahmedwelhakim.schematocode.core.infer.InputParser
 import com.github.ahmedwelhakim.schematocode.core.ir.Field
 import com.github.ahmedwelhakim.schematocode.core.ir.ScalarType
 import com.github.ahmedwelhakim.schematocode.core.ir.TypeDef
 import kotlinx.serialization.json.*
 
+/**
+ * Parser for JSON input that infers type definitions from JSON data.
+ * Analyzes the structure of JSON to create corresponding TypeDef representations.
+ */
+object JsonInputParser : InputParser {
+    override fun parse(input: String, rootName: String): TypeDef {
+        return try {
+            inferFromJson(rootName, input)
+        } catch (e: Exception) {
+            throw InputParseException("Failed to parse JSON: ${e.message}", e)
+        }
+    }
+}
+
+/**
+ * Infers a TypeDef from a JSON string.
+ *
+ * @param name The name hint for the root type.
+ * @param jsonText The JSON string to parse.
+ * @return The inferred type definition.
+ */
 fun inferFromJson(name: String, jsonText: String): TypeDef {
     val raw = when (val json = Json.parseToJsonElement(jsonText)) {
         is JsonObject -> TypeDef.ObjectT(inferFields(json))
@@ -30,7 +53,6 @@ private fun inferType(el: JsonElement, key: String): TypeDef =
         is JsonPrimitive -> inferPrimitive(el)
         is JsonArray -> inferArray(el, key)
         is JsonObject -> TypeDef.ObjectT(
-
             fields = inferFields(el)
         )
 

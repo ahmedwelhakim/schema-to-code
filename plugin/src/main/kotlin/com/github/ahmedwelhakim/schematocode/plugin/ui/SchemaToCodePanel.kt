@@ -34,6 +34,18 @@ import java.awt.Cursor
 import java.awt.datatransfer.StringSelection
 import javax.swing.*
 
+/**
+ * Main UI panel for the Schema to Code plugin.
+ *
+ * Contains:
+ * - Settings toolbar (language, naming strategy, emission mode, language options)
+ * - Split view with JSON input editor and generated code output editor
+ * - Copy button for copying generated code to clipboard
+ *
+ * Uses MVVM pattern with [SchemaToCodeViewModel] for state management.
+ *
+ * @param project The project context for editor creation and settings.
+ */
 class SchemaToCodePanel(
     private val project: Project
 ) : JPanel(BorderLayout()), Disposable {
