@@ -6,8 +6,7 @@ import com.github.ahmedwelhakim.schematocode.core.infer.json.JsonInputParser
 /**
  * Registry for input parsers.
  * Maps input formats to their corresponding parser implementations.
- */
-object InputParserRegistry {
+ */object InputParserRegistry {
     private val parsers: Map<InputFormat, InputParser> = mapOf(
         InputFormat.JSON to JsonInputParser
     )

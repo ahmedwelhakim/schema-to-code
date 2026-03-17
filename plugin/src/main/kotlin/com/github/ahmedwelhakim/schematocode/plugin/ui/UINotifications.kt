@@ -1,5 +1,6 @@
 package com.github.ahmedwelhakim.schematocode.plugin.ui
 
+import com.github.ahmedwelhakim.schematocode.plugin.SchemaToCodeBundle
 import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.project.Project
@@ -20,7 +21,7 @@ object UINotifications {
         NotificationGroupManager.getInstance()
             .getNotificationGroup("SchemaToCode")
             .createNotification(
-                "Copied to clipboard",
+                SchemaToCodeBundle.message("notification.copied"),
                 NotificationType.INFORMATION
             )
             .notify(project)

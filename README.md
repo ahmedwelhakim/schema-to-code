@@ -125,6 +125,7 @@ This project is licensed under the MIT License.
 - [ ] Support Kotlin code generation
 - [ ] Support Java code generation
 - [ ] Support reading and generating code from OpenAPI schema
+- [ ] Support reading and generating code from Swagger schema
 
 ---
 Plugin based on the [IntelliJ Platform Plugin Template][template].

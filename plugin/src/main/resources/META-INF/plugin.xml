@@ -12,10 +12,14 @@
 
     <extensions defaultExtensionNs="com.intellij">
         <toolWindow id="Schema To Code"
-                    factoryClass="com.github.ahmedwelhakim.schematocode.plugin.ui.SchemaToCodeToolWindowFactory"/>
+                    factoryClass="com.github.ahmedwelhakim.schematocode.plugin.ui.SchemaToCodeToolWindowFactory"
+                    icon="/icons/toolwindowIcon.svg"
+        />
         <notificationGroup
                 id="SchemaToCode"
                 displayType="BALLOON"
-                isLogByDefault="false"/>
+                isLogByDefault="false"
+                bundle="messages.SchemaToCodeBundle"
+                key="notification.group.schematocode"/>
     </extensions>
 </idea-plugin>

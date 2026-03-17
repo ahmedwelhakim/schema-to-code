@@ -80,19 +80,19 @@ class SchemaToCodePanel(
         // Toolbar
         // ----------------------------
         collapsibleGroup(
-            "Settings",
+            SchemaToCodeBundle.message("ui.settings"),
             true
         ) {
             row {
 
                 enumSelector(
-                    "Language: ",
+                    SchemaToCodeBundle.message("ui.language"),
                     TargetLanguage.entries,
                     viewModel.state.value.targetLanguage
                 ) { viewModel.onLanguageChanged(it) }
 
                 enumSelector(
-                    "Naming Strategy: ",
+                    SchemaToCodeBundle.message("ui.namingStrategy"),
                     NamingStrategyType.entries,
                     viewModel.state.value.namingStrategy
                 ) { viewModel.onNamingChanged(it) }
@@ -101,7 +101,7 @@ class SchemaToCodePanel(
             }
 
             collapsibleGroup(
-                "Language Options",
+                SchemaToCodeBundle.message("ui.languageOptions"),
                 true
             ) {
 
@@ -121,7 +121,7 @@ class SchemaToCodePanel(
             splitter = Splitter(false, 0.5f).apply {
 
                 firstComponent = JPanel(BorderLayout()).apply {
-                    add(JLabel("Input"), BorderLayout.NORTH)
+                    add(JLabel(SchemaToCodeBundle.message("ui.input")), BorderLayout.NORTH)
                     add(
                         JScrollPane(inputEditor).apply {
                             verticalScrollBar.unitIncrement = 12
@@ -132,7 +132,7 @@ class SchemaToCodePanel(
                 }
 
                 secondComponent = JPanel(BorderLayout()).apply {
-                    add(JLabel("Output"), BorderLayout.NORTH)
+                    add(JLabel(SchemaToCodeBundle.message("ui.output")), BorderLayout.NORTH)
                     add(buildOutputArea(), BorderLayout.CENTER)
                 }
 
@@ -146,7 +146,7 @@ class SchemaToCodePanel(
         // Copy Button
         // ----------------------------
         row {
-            val copyButton = JButton("Copy").apply {
+            val copyButton = JButton(SchemaToCodeBundle.message("ui.copy")).apply {
                 isFocusable = false
                 cursor = Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)
                 addActionListener { copyOutput() }
