@@ -1,8 +1,8 @@
 # Schema to Code
 
 ![Build](https://github.com/ahmedwelhakim/schema-to-code/workflows/Build/badge.svg)
-[![Version](https://img.shields.io/jetbrains/plugin/v/MARKETPLACE_ID.svg)](https://plugins.jetbrains.com/plugin/MARKETPLACE_ID)
-[![Downloads](https://img.shields.io/jetbrains/plugin/d/MARKETPLACE_ID.svg)](https://plugins.jetbrains.com/plugin/MARKETPLACE_ID)
+[![Version](https://img.shields.io/jetbrains/plugin/v/30752.svg)](https://plugins.jetbrains.com/plugin/MARKETPLACE_ID)
+[![Downloads](https://img.shields.io/jetbrains/plugin/d/30752.svg)](https://plugins.jetbrains.com/plugin/MARKETPLACE_ID)
 
 An IntelliJ IDEA plugin that generates type-safe code from JSON data. Paste your JSON and instantly get TypeScript
 interfaces, type aliases, and more.
